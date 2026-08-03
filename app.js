@@ -4385,16 +4385,56 @@ function App() {
     });
   }, []);
 
-  const deletePolicy = useCallback((id) => {
+  const purgePolicyFromAllCategories = useCallback((id) => {
     setPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_policies', JSON.stringify(next));
       setTimeout(() => syncCategoryToCloud('policies', next), 0);
       return next;
     });
-    toast('Póliza eliminada', 'warning');
+    setCaroPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('caroPolicies', next), 0);
+      return next;
+    });
+    setGmmPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('gmmPolicies', next), 0);
+      return next;
+    });
+    setAutosPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('autosPolicies', next), 0);
+      return next;
+    });
+    setVidaPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('vidaPolicies', next), 0);
+      return next;
+    });
+    setDanosPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('danosPolicies', next), 0);
+      return next;
+    });
+    setHogarPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud('hogarPolicies', next), 0);
+      return next;
+    });
     setDeleteConfirm(null);
-  }, [toast]);
+  }, [syncCategoryToCloud]);
+
+  const deletePolicy = useCallback((id) => {
+    purgePolicyFromAllCategories(id);
+    toast('Póliza eliminada', 'warning');
+  }, [purgePolicyFromAllCategories, toast]);
 
   // Marcar como pagado → re-agendar
   const markPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
@@ -4474,15 +4514,9 @@ function App() {
   }, []);
 
   const deleteCaroPolicy = useCallback((id) => {
-    setCaroPolicies(prev => {
-      const next = prev.filter(p => p.id !== id);
-      localStorage.setItem('sc_caro_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('caroPolicies', next), 0);
-      return next;
-    });
+    purgePolicyFromAllCategories(id);
     toast('Póliza eliminada', 'warning');
-    setDeleteConfirm(null);
-  }, [toast]);
+  }, [purgePolicyFromAllCategories, toast]);
 
   const markCaroPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
     setCaroPolicies(prev => {
@@ -4519,15 +4553,9 @@ function App() {
   }, []);
 
   const deleteGmmPolicy = useCallback((id) => {
-    setGmmPolicies(prev => {
-      const next = prev.filter(p => p.id !== id);
-      localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('gmmPolicies', next), 0);
-      return next;
-    });
+    purgePolicyFromAllCategories(id);
     toast('Póliza GMM eliminada', 'warning');
-    setDeleteConfirm(null);
-  }, [toast]);
+  }, [purgePolicyFromAllCategories, toast]);
 
   const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
     setGmmPolicies(prev => {
@@ -4564,15 +4592,9 @@ function App() {
   }, []);
 
   const deleteAutosPolicy = useCallback((id) => {
-    setAutosPolicies(prev => {
-      const next = prev.filter(p => p.id !== id);
-      localStorage.setItem('sc_autos_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('autosPolicies', next), 0);
-      return next;
-    });
+    purgePolicyFromAllCategories(id);
     toast('Póliza de Autos eliminada', 'warning');
-    setDeleteConfirm(null);
-  }, [toast]);
+  }, [purgePolicyFromAllCategories, toast]);
 
   const markAutosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
     setAutosPolicies(prev => {
@@ -4609,15 +4631,9 @@ function App() {
   }, []);
 
   const deleteVidaPolicy = useCallback((id) => {
-    setVidaPolicies(prev => {
-      const next = prev.filter(p => p.id !== id);
-      localStorage.setItem('sc_vida_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('vidaPolicies', next), 0);
-      return next;
-    });
+    purgePolicyFromAllCategories(id);
     toast('Póliza de Vida eliminada', 'warning');
-    setDeleteConfirm(null);
-  }, [toast]);
+  }, [purgePolicyFromAllCategories, toast]);
 
   const markVidaPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
     setVidaPolicies(prev => {
@@ -4654,15 +4670,9 @@ function App() {
   }, []);
 
   const deleteDanosPolicy = useCallback((id) => {
-    setDanosPolicies(prev => {
-      const next = prev.filter(p => p.id !== id);
-      localStorage.setItem('sc_danos_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('danosPolicies', next), 0);
-      return next;
-    });
+    purgePolicyFromAllCategories(id);
     toast('Póliza de Daños eliminada', 'warning');
-    setDeleteConfirm(null);
-  }, [toast]);
+  }, [purgePolicyFromAllCategories, toast]);
 
   const markDanosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
     setDanosPolicies(prev => {
