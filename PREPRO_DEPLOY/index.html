@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SeguroControl – Gestión de Cobranza</title>
+  <meta name="description" content="Sistema interno de gestión y automatización de cobranza de pólizas de seguros." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + ReactDOM from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel standalone for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- SheetJS for Excel import/export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Firebase Realtime Database SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaR_PGMfnGoo9KpnXeROoUhNyxFWf1S-Q",
+      authDomain: "pre-pro-consultores-gestion.firebaseapp.com",
+      databaseURL: "https://pre-pro-consultores-gestion-default-rtdb.firebaseio.com",
+      projectId: "pre-pro-consultores-gestion",
+      storageBucket: "pre-pro-consultores-gestion.firebasestorage.app",
+      messagingSenderId: "1063588415672",
+      appId: "1:1063588415672:web:f09bed491544fe5b900c4d",
+      measurementId: "G-XJLVSK871H"
+    };
+    if (typeof firebase !== 'undefined') {
+      firebase.initializeApp(firebaseConfig);
+      window.db = firebase.database();
+    }
+  </script>
+
+  <script type="text/babel" src="app.js"></script>
+</body>
+</html>
