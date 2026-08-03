@@ -4182,83 +4182,107 @@ function App() {
   });
 
   const [dbConnected, setDbConnected] = useState(false);
-  const syncCategoryToCloud = (category, list) => {
-    if (window.db) {
-      window.db.ref(`app_data/${category}`).set(list || []);
-    }
+  const FIREBASE_REST_URL = 'https://pre-pro-consultores-gestion-default-rtdb.firebaseio.com/app_data';
+
+  const parseList = (node) => {
+    if (!node) return [];
+    if (Array.isArray(node)) return node.filter(Boolean);
+    if (typeof node === 'object') return Object.values(node).filter(Boolean);
+    return [];
   };
 
-  // ☁️ Sincronización en tiempo real bidireccional (Link ↔ Local) con Firebase
+  const applyCloudData = useCallback((data) => {
+    if (!data) return;
+    isCloudLoaded.current = true;
+    setDbConnected(true);
+
+    const pList = parseList(data.policies);
+    setPolicies(pList);
+    localStorage.setItem('sc_policies', JSON.stringify(pList));
+
+    const cList = parseList(data.caroPolicies);
+    setCaroPolicies(cList);
+    localStorage.setItem('sc_caro_policies', JSON.stringify(cList));
+
+    const gList = parseList(data.gmmPolicies);
+    setGmmPolicies(gList);
+    localStorage.setItem('sc_gmm_policies', JSON.stringify(gList));
+
+    const aList = parseList(data.autosPolicies);
+    setAutosPolicies(aList);
+    localStorage.setItem('sc_autos_policies', JSON.stringify(aList));
+
+    const vList = parseList(data.vidaPolicies);
+    setVidaPolicies(vList);
+    localStorage.setItem('sc_vida_policies', JSON.stringify(vList));
+
+    const dList = parseList(data.danosPolicies);
+    setDanosPolicies(dList);
+    localStorage.setItem('sc_danos_policies', JSON.stringify(dList));
+
+    const hList = parseList(data.hogarPolicies);
+    setHogarPolicies(hList);
+    localStorage.setItem('sc_hogar_policies', JSON.stringify(hList));
+
+    const sList = parseList(data.siniestros);
+    setSiniestros(sList);
+    localStorage.setItem('sc_siniestros', JSON.stringify(sList));
+
+    const cotList = parseList(data.cotizaciones);
+    setCotizaciones(cotList);
+    localStorage.setItem('sc_cotizaciones', JSON.stringify(cotList));
+
+    if (data.templates) {
+      setTemplates(data.templates);
+      localStorage.setItem('sc_templates', JSON.stringify(data.templates));
+    }
+  }, []);
+
+  const syncCategoryToCloud = useCallback((category, list) => {
+    const cleanList = list || [];
+    // 1. Firebase Realtime SDK update
+    if (window.db) {
+      try { window.db.ref(`app_data/${category}`).set(cleanList); } catch(e) {}
+    }
+    // 2. HTTP REST update (Inquebrantable para cualquier navegador/red)
+    fetch(`${FIREBASE_REST_URL}/${category}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cleanList)
+    }).catch(err => console.error('Cloud REST PUT error:', err));
+  }, []);
+
+  // ☁️ Sincronización Híbrida en tiempo real (REST + WebSockets) con Firebase
   useEffect(() => {
+    // 1. Carga REST Inmediata (funciona en TODOS los perfiles de Chrome, teléfonos e Incógnito)
+    fetch(`${FIREBASE_REST_URL}.json`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) applyCloudData(data);
+      })
+      .catch(err => console.error('Cloud REST GET error:', err));
+
+    // 2. Escuchador Realtime WebSocket (para cambios en vivo instantáneos)
     if (!window.db) return;
 
     const connectedRef = window.db.ref('.info/connected');
-    const onConnected = (snap) => setDbConnected(snap.val() === true);
-    connectedRef.on('value', onConnected);
-
-    const parseList = (node) => {
-      if (!node) return [];
-      if (Array.isArray(node)) return node.filter(Boolean);
-      if (typeof node === 'object') return Object.values(node).filter(Boolean);
-      return [];
+    const onConnected = (snap) => {
+      if (snap.val() === true) setDbConnected(true);
     };
+    connectedRef.on('value', onConnected);
 
     const dbRef = window.db.ref('app_data');
     const handleValue = (snapshot) => {
       const data = snapshot.val();
-      if (!data) return;
-
-      isCloudLoaded.current = true;
-
-      const pList = parseList(data.policies);
-      setPolicies(pList);
-      localStorage.setItem('sc_policies', JSON.stringify(pList));
-
-      const cList = parseList(data.caroPolicies);
-      setCaroPolicies(cList);
-      localStorage.setItem('sc_caro_policies', JSON.stringify(cList));
-
-      const gList = parseList(data.gmmPolicies);
-      setGmmPolicies(gList);
-      localStorage.setItem('sc_gmm_policies', JSON.stringify(gList));
-
-      const aList = parseList(data.autosPolicies);
-      setAutosPolicies(aList);
-      localStorage.setItem('sc_autos_policies', JSON.stringify(aList));
-
-      const vList = parseList(data.vidaPolicies);
-      setVidaPolicies(vList);
-      localStorage.setItem('sc_vida_policies', JSON.stringify(vList));
-
-      const dList = parseList(data.danosPolicies);
-      setDanosPolicies(dList);
-      localStorage.setItem('sc_danos_policies', JSON.stringify(dList));
-
-      const hList = parseList(data.hogarPolicies);
-      setHogarPolicies(hList);
-      localStorage.setItem('sc_hogar_policies', JSON.stringify(hList));
-
-      const sList = parseList(data.siniestros);
-      setSiniestros(sList);
-      localStorage.setItem('sc_siniestros', JSON.stringify(sList));
-
-      const cotList = parseList(data.cotizaciones);
-      setCotizaciones(cotList);
-      localStorage.setItem('sc_cotizaciones', JSON.stringify(cotList));
-
-      if (data.templates) {
-        setTemplates(data.templates);
-        localStorage.setItem('sc_templates', JSON.stringify(data.templates));
-      }
+      if (data) applyCloudData(data);
     };
-
     dbRef.on('value', handleValue);
 
     return () => {
       connectedRef.off('value', onConnected);
       dbRef.off('value', handleValue);
     };
-  }, []);
+  }, [applyCloudData]);
 
   // Función para forzar la subida de datos locales a la nube
   const uploadLocalToCloud = useCallback(() => {
