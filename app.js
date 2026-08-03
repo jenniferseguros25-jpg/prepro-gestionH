@@ -1265,7 +1265,7 @@ function PoliciesTable({ policies, onEdit, onDelete, onMarkPaid, onWhatsApp, onE
                 <code 
                   onDoubleClick={() => setSummaryPolicy(p)}
                   title="Haz doble clic para ver el resumen completo"
-                  style={{fontSize:12, color:'var(--text-secondary)', background:'rgba(255,255,255,0.08)', padding:'4px 8px', borderRadius:4, cursor:'pointer', userSelect:'none'}}
+                  style={{fontSize:12, color:'var(--text-secondary)', background:'rgba(255,255,255,0.08)', padding:'4px 8px', borderRadius:4, cursor:'pointer', userSelect:'text'}}
                 >
                   📋 {p.poliza}
                 </code>
