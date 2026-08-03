@@ -4188,85 +4188,64 @@ function App() {
     }
   };
 
-  // ☁️ Sincronización en tiempo real con Firebase Realtime Database
+  // ☁️ Sincronización en tiempo real bidireccional (Link ↔ Local) con Firebase
   useEffect(() => {
     if (!window.db) return;
 
     const connectedRef = window.db.ref('.info/connected');
-    connectedRef.on('value', (snap) => {
-      setDbConnected(snap.val() === true);
-    });
+    const onConnected = (snap) => setDbConnected(snap.val() === true);
+    connectedRef.on('value', onConnected);
 
-    const dbRef = window.db.ref('app_data');
-
-    const handleValue = (snapshot) => {
-      const data = snapshot.val();
-      if (!data) return;
-
-      isCloudLoaded.current = true;
-
-      const parseList = (node) => {
-        if (!node) return [];
-        if (Array.isArray(node)) return node.filter(Boolean);
-        if (typeof node === 'object') return Object.values(node).filter(Boolean);
-        return [];
-      };
-
-      if (data.policies !== undefined) {
-        const list = parseList(data.policies);
-        setPolicies(list);
-        localStorage.setItem('sc_policies', JSON.stringify(list));
-      }
-      if (data.caroPolicies !== undefined) {
-        const list = parseList(data.caroPolicies);
-        setCaroPolicies(list);
-        localStorage.setItem('sc_caro_policies', JSON.stringify(list));
-      }
-      if (data.gmmPolicies !== undefined) {
-        const list = parseList(data.gmmPolicies);
-        setGmmPolicies(list);
-        localStorage.setItem('sc_gmm_policies', JSON.stringify(list));
-      }
-      if (data.autosPolicies !== undefined) {
-        const list = parseList(data.autosPolicies);
-        setAutosPolicies(list);
-        localStorage.setItem('sc_autos_policies', JSON.stringify(list));
-      }
-      if (data.vidaPolicies !== undefined) {
-        const list = parseList(data.vidaPolicies);
-        setVidaPolicies(list);
-        localStorage.setItem('sc_vida_policies', JSON.stringify(list));
-      }
-      if (data.danosPolicies !== undefined) {
-        const list = parseList(data.danosPolicies);
-        setDanosPolicies(list);
-        localStorage.setItem('sc_danos_policies', JSON.stringify(list));
-      }
-      if (data.hogarPolicies !== undefined) {
-        const list = parseList(data.hogarPolicies);
-        setHogarPolicies(list);
-        localStorage.setItem('sc_hogar_policies', JSON.stringify(list));
-      }
-      if (data.siniestros !== undefined) {
-        const list = parseList(data.siniestros);
-        setSiniestros(list);
-        localStorage.setItem('sc_siniestros', JSON.stringify(list));
-      }
-      if (data.cotizaciones !== undefined) {
-        const list = parseList(data.cotizaciones);
-        setCotizaciones(list);
-        localStorage.setItem('sc_cotizaciones', JSON.stringify(list));
-      }
-      if (data.templates) {
-        setTemplates(data.templates);
-        localStorage.setItem('sc_templates', JSON.stringify(data.templates));
-      }
+    const parseList = (node) => {
+      if (!node) return [];
+      if (Array.isArray(node)) return node.filter(Boolean);
+      if (typeof node === 'object') return Object.values(node).filter(Boolean);
+      return [];
     };
 
-    dbRef.on('value', handleValue);
+    const listenBranch = (path, setter, storageKey) => {
+      const ref = window.db.ref(`app_data/${path}`);
+      try { ref.keepSynced(true); } catch(e) {}
+      const listener = (snap) => {
+        isCloudLoaded.current = true;
+        const val = snap.val();
+        if (val !== null && val !== undefined) {
+          const list = parseList(val);
+          setter(list);
+          localStorage.setItem(storageKey, JSON.stringify(list));
+        }
+      };
+      ref.on('value', listener);
+      return { ref, listener };
+    };
+
+    const listeners = [
+      listenBranch('policies', setPolicies, 'sc_policies'),
+      listenBranch('caroPolicies', setCaroPolicies, 'sc_caro_policies'),
+      listenBranch('gmmPolicies', setGmmPolicies, 'sc_gmm_policies'),
+      listenBranch('autosPolicies', setAutosPolicies, 'sc_autos_policies'),
+      listenBranch('vidaPolicies', setVidaPolicies, 'sc_vida_policies'),
+      listenBranch('danosPolicies', setDanosPolicies, 'sc_danos_policies'),
+      listenBranch('hogarPolicies', setHogarPolicies, 'sc_hogar_policies'),
+      listenBranch('siniestros', setSiniestros, 'sc_siniestros'),
+      listenBranch('cotizaciones', setCotizaciones, 'sc_cotizaciones'),
+    ];
+
+    const tplRef = window.db.ref('app_data/templates');
+    try { tplRef.keepSynced(true); } catch(e) {}
+    const tplListener = (snap) => {
+      const val = snap.val();
+      if (val) {
+        setTemplates(val);
+        localStorage.setItem('sc_templates', JSON.stringify(val));
+      }
+    };
+    tplRef.on('value', tplListener);
+
     return () => {
-      dbRef.off('value', handleValue);
-      connectedRef.off('value');
+      connectedRef.off('value', onConnected);
+      listeners.forEach(({ ref, listener }) => ref.off('value', listener));
+      tplRef.off('value', tplListener);
     };
   }, []);
 
