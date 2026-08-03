@@ -4184,7 +4184,7 @@ function App() {
   const [dbConnected, setDbConnected] = useState(false);
   const syncCategoryToCloud = (category, list) => {
     if (window.db) {
-      window.db.ref(`app_data/${category}`).set(list);
+      window.db.ref(`app_data/${category}`).set(list || []);
     }
   };
 
@@ -4209,11 +4209,9 @@ function App() {
       const listener = (snap) => {
         isCloudLoaded.current = true;
         const val = snap.val();
-        if (val !== null && val !== undefined) {
-          const list = parseList(val);
-          setter(list);
-          localStorage.setItem(storageKey, JSON.stringify(list));
-        }
+        const list = parseList(val);
+        setter(list);
+        localStorage.setItem(storageKey, JSON.stringify(list));
       };
       ref.on('value', listener);
       return { ref, listener };
@@ -4320,7 +4318,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_policies', JSON.stringify(next));
-      syncCategoryToCloud('policies', next);
+      setTimeout(() => syncCategoryToCloud('policies', next), 0);
       return next;
     });
   }, []);
@@ -4329,7 +4327,7 @@ function App() {
     setPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_policies', JSON.stringify(next));
-      syncCategoryToCloud('policies', next);
+      setTimeout(() => syncCategoryToCloud('policies', next), 0);
       return next;
     });
     toast('Póliza eliminada', 'warning');
@@ -4354,7 +4352,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_policies', JSON.stringify(next));
-      syncCategoryToCloud('policies', next);
+      setTimeout(() => syncCategoryToCloud('policies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4364,7 +4362,7 @@ function App() {
     setPolicies(prev => {
       const next = mode === 'reemplazar' ? data : [...prev, ...data];
       localStorage.setItem('sc_policies', JSON.stringify(next));
-      syncCategoryToCloud('policies', next);
+      setTimeout(() => syncCategoryToCloud('policies', next), 0);
       return next;
     });
   }, []);
@@ -4396,7 +4394,7 @@ function App() {
       });
       
       localStorage.setItem('sc_siniestros', JSON.stringify(next));
-      syncCategoryToCloud('siniestros', next);
+      setTimeout(() => syncCategoryToCloud('siniestros', next), 0);
       toast(`Importación completada: ${added} nuevos, ${updated} actualizados.`, 'success');
       return next;
     });
@@ -4408,7 +4406,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
-      syncCategoryToCloud('caroPolicies', next);
+      setTimeout(() => syncCategoryToCloud('caroPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4417,7 +4415,7 @@ function App() {
     setCaroPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
-      syncCategoryToCloud('caroPolicies', next);
+      setTimeout(() => syncCategoryToCloud('caroPolicies', next), 0);
       return next;
     });
     toast('Póliza eliminada', 'warning');
@@ -4441,7 +4439,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
-      syncCategoryToCloud('caroPolicies', next);
+      setTimeout(() => syncCategoryToCloud('caroPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4453,7 +4451,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
-      syncCategoryToCloud('gmmPolicies', next);
+      setTimeout(() => syncCategoryToCloud('gmmPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4462,7 +4460,7 @@ function App() {
     setGmmPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
-      syncCategoryToCloud('gmmPolicies', next);
+      setTimeout(() => syncCategoryToCloud('gmmPolicies', next), 0);
       return next;
     });
     toast('Póliza GMM eliminada', 'warning');
@@ -4486,7 +4484,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
-      syncCategoryToCloud('gmmPolicies', next);
+      setTimeout(() => syncCategoryToCloud('gmmPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4498,7 +4496,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
-      syncCategoryToCloud('autosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('autosPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4507,7 +4505,7 @@ function App() {
     setAutosPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
-      syncCategoryToCloud('autosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('autosPolicies', next), 0);
       return next;
     });
     toast('Póliza de Autos eliminada', 'warning');
@@ -4531,7 +4529,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
-      syncCategoryToCloud('autosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('autosPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4543,7 +4541,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
-      syncCategoryToCloud('vidaPolicies', next);
+      setTimeout(() => syncCategoryToCloud('vidaPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4552,7 +4550,7 @@ function App() {
     setVidaPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
-      syncCategoryToCloud('vidaPolicies', next);
+      setTimeout(() => syncCategoryToCloud('vidaPolicies', next), 0);
       return next;
     });
     toast('Póliza de Vida eliminada', 'warning');
@@ -4576,7 +4574,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
-      syncCategoryToCloud('vidaPolicies', next);
+      setTimeout(() => syncCategoryToCloud('vidaPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4588,7 +4586,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
-      syncCategoryToCloud('danosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('danosPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4597,7 +4595,7 @@ function App() {
     setDanosPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
-      syncCategoryToCloud('danosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('danosPolicies', next), 0);
       return next;
     });
     toast('Póliza de Daños eliminada', 'warning');
@@ -4621,7 +4619,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
-      syncCategoryToCloud('danosPolicies', next);
+      setTimeout(() => syncCategoryToCloud('danosPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
@@ -4633,7 +4631,7 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
-      syncCategoryToCloud('hogarPolicies', next);
+      setTimeout(() => syncCategoryToCloud('hogarPolicies', next), 0);
       return next;
     });
   }, []);
@@ -4642,7 +4640,7 @@ function App() {
     setHogarPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
-      syncCategoryToCloud('hogarPolicies', next);
+      setTimeout(() => syncCategoryToCloud('hogarPolicies', next), 0);
       return next;
     });
     toast('Póliza de Hogar eliminada', 'warning');
@@ -4666,7 +4664,7 @@ function App() {
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
-      syncCategoryToCloud('hogarPolicies', next);
+      setTimeout(() => syncCategoryToCloud('hogarPolicies', next), 0);
       return next;
     });
     toast('Pago confirmado', 'success');
