@@ -313,20 +313,20 @@ function AgentBadge({ policy, agente }) {
 
 // ─── Ramo Badge ──────────────────────────────────────────────
 function RamoBadge({ policy }) {
-  if (policy?._isCaro) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa', fontWeight: 'bold'}}>CARO</span>;
+  if (policy?._isCaro) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa', fontWeight: 'bold'}}>AUTOS QUALITAS CARO</span>;
   if (policy?._isGmm) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', fontWeight: 'bold'}}>GMM</span>;
   if (policy?._isAutos) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', fontWeight: 'bold'}}>AUTOS</span>;
   if (policy?._isVida) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(236, 72, 153, 0.2)', color: '#f472b6', fontWeight: 'bold'}}>VIDA</span>;
   if (policy?._isDanos) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(14, 165, 233, 0.2)', color: '#38bdf8', fontWeight: 'bold'}}>DAÑOS</span>;
   if (policy?._isHogar) return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', fontWeight: 'bold'}}>HOGAR</span>;
-  return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(23, 113, 197, 0.2)', color: '#60a5fa', fontWeight: 'bold'}}>QUALITAS</span>;
+  return <span style={{fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'rgba(23, 113, 197, 0.2)', color: '#60a5fa', fontWeight: 'bold'}}>AUTOS QUALITAS DANI</span>;
 }
 
 // ─── Modal de Resumen de Póliza (Doble Clic) ─────────────────
 function PolicySummaryModal({ policy: p, onClose }) {
   if (!p) return null;
   const bienLabel = p._isVida ? 'Producto' : p._isGmm ? 'Plan' : p._isHogar ? 'Inmueble' : p._isDanos ? 'Bien Asegurado' : 'Unidad / Vehículo';
-  const ramoLabel = p._isCaro ? 'Autos Qualitas Caro' : p._isGmm ? 'GMM' : p._isAutos ? 'Autos (Otras)' : p._isVida ? 'Vida' : p._isDanos ? 'Daños' : p._isHogar ? 'Hogar' : 'Autos Qualitas';
+  const ramoLabel = p._isCaro ? 'Autos Qualitas Caro' : p._isGmm ? 'GMM' : p._isAutos ? 'Autos (Otras)' : p._isVida ? 'Vida' : p._isDanos ? 'Daños' : p._isHogar ? 'Hogar' : 'Autos Qualitas Dani';
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{zIndex: 999999}}>
@@ -1201,7 +1201,7 @@ function PoliciesTable({ policies, onEdit, onDelete, onMarkPaid, onWhatsApp, onE
     return [...policies].sort((a, b) => {
       let av = a[sort.key], bv = b[sort.key];
       if (sort.key === 'ramo') {
-        const getRamoStr = p => p?._isCaro ? 'CARO' : p?._isGmm ? 'GMM' : p?._isAutos ? 'AUTOS' : p?._isVida ? 'VIDA' : p?._isDanos ? 'DAÑOS' : p?._isHogar ? 'HOGAR' : 'QUALITAS';
+        const getRamoStr = p => p?._isCaro ? 'AUTOS QUALITAS CARO' : p?._isGmm ? 'GMM' : p?._isAutos ? 'AUTOS' : p?._isVida ? 'VIDA' : p?._isDanos ? 'DAÑOS' : p?._isHogar ? 'HOGAR' : 'AUTOS QUALITAS DANI';
         av = getRamoStr(a);
         bv = getRamoStr(b);
       }
@@ -4192,57 +4192,48 @@ function App() {
     const handleValue = (snapshot) => {
       setDbConnected(true);
       const data = snapshot.val();
+      if (!data) return;
 
-      if (data && ((data.policies && data.policies.length > 0) || (data.caroPolicies && data.caroPolicies.length > 0) || (data.gmmPolicies && data.gmmPolicies.length > 0) || (data.autosPolicies && data.autosPolicies.length > 0))) {
-        isCloudLoaded.current = true;
-        if (Array.isArray(data.policies)) setPolicies(data.policies);
-        if (Array.isArray(data.caroPolicies)) setCaroPolicies(data.caroPolicies);
-        if (Array.isArray(data.gmmPolicies)) setGmmPolicies(data.gmmPolicies);
-        if (Array.isArray(data.autosPolicies)) setAutosPolicies(data.autosPolicies);
-        if (Array.isArray(data.vidaPolicies)) setVidaPolicies(data.vidaPolicies);
-        if (Array.isArray(data.danosPolicies)) setDanosPolicies(data.danosPolicies);
-        if (Array.isArray(data.hogarPolicies)) setHogarPolicies(data.hogarPolicies);
-        if (Array.isArray(data.siniestros)) setSiniestros(data.siniestros);
-        if (Array.isArray(data.cotizaciones)) setCotizaciones(data.cotizaciones);
-        if (data.templates) setTemplates(data.templates);
-      } else if (!isCloudLoaded.current) {
-        // Nube vacía: si este navegador tiene datos locales guardados, subirlos a la nube
-        const localPols = JSON.parse(localStorage.getItem('sc_policies') || '[]');
-        const localCaro = JSON.parse(localStorage.getItem('sc_caro_policies') || '[]');
-        const localGmm = JSON.parse(localStorage.getItem('sc_gmm_policies') || '[]');
-        const localAutos = JSON.parse(localStorage.getItem('sc_autos_policies') || '[]');
-        const localVida = JSON.parse(localStorage.getItem('sc_vida_policies') || '[]');
-        const localDanos = JSON.parse(localStorage.getItem('sc_danos_policies') || '[]');
-        const localHogar = JSON.parse(localStorage.getItem('sc_hogar_policies') || '[]');
-        const localSini = JSON.parse(localStorage.getItem('sc_siniestros') || '[]');
-        const localCoti = JSON.parse(localStorage.getItem('sc_cotizaciones') || '[]');
-        const localTpls = JSON.parse(localStorage.getItem('sc_templates') || 'null') || DEFAULT_TEMPLATES;
-
-        if (localPols.length > 0 || localCaro.length > 0 || localGmm.length > 0 || localAutos.length > 0 || localVida.length > 0 || localDanos.length > 0 || localHogar.length > 0) {
-          isCloudLoaded.current = true;
-          dbRef.set({
-            policies: localPols,
-            caroPolicies: localCaro,
-            gmmPolicies: localGmm,
-            autosPolicies: localAutos,
-            vidaPolicies: localVida,
-            danosPolicies: localDanos,
-            hogarPolicies: localHogar,
-            siniestros: localSini,
-            cotizaciones: localCoti,
-            templates: localTpls
-          });
-          setPolicies(localPols);
-          setCaroPolicies(localCaro);
-          setGmmPolicies(localGmm);
-          setAutosPolicies(localAutos);
-          setVidaPolicies(localVida);
-          setDanosPolicies(localDanos);
-          setHogarPolicies(localHogar);
-          setSiniestros(localSini);
-          setCotizaciones(localCoti);
-          setTemplates(localTpls);
-        }
+      isCloudLoaded.current = true;
+      if (Array.isArray(data.policies)) {
+        setPolicies(data.policies);
+        localStorage.setItem('sc_policies', JSON.stringify(data.policies));
+      }
+      if (Array.isArray(data.caroPolicies)) {
+        setCaroPolicies(data.caroPolicies);
+        localStorage.setItem('sc_caro_policies', JSON.stringify(data.caroPolicies));
+      }
+      if (Array.isArray(data.gmmPolicies)) {
+        setGmmPolicies(data.gmmPolicies);
+        localStorage.setItem('sc_gmm_policies', JSON.stringify(data.gmmPolicies));
+      }
+      if (Array.isArray(data.autosPolicies)) {
+        setAutosPolicies(data.autosPolicies);
+        localStorage.setItem('sc_autos_policies', JSON.stringify(data.autosPolicies));
+      }
+      if (Array.isArray(data.vidaPolicies)) {
+        setVidaPolicies(data.vidaPolicies);
+        localStorage.setItem('sc_vida_policies', JSON.stringify(data.vidaPolicies));
+      }
+      if (Array.isArray(data.danosPolicies)) {
+        setDanosPolicies(data.danosPolicies);
+        localStorage.setItem('sc_danos_policies', JSON.stringify(data.danosPolicies));
+      }
+      if (Array.isArray(data.hogarPolicies)) {
+        setHogarPolicies(data.hogarPolicies);
+        localStorage.setItem('sc_hogar_policies', JSON.stringify(data.hogarPolicies));
+      }
+      if (Array.isArray(data.siniestros)) {
+        setSiniestros(data.siniestros);
+        localStorage.setItem('sc_siniestros', JSON.stringify(data.siniestros));
+      }
+      if (Array.isArray(data.cotizaciones)) {
+        setCotizaciones(data.cotizaciones);
+        localStorage.setItem('sc_cotizaciones', JSON.stringify(data.cotizaciones));
+      }
+      if (data.templates) {
+        setTemplates(data.templates);
+        localStorage.setItem('sc_templates', JSON.stringify(data.templates));
       }
     };
 
@@ -4257,6 +4248,9 @@ function App() {
     const localCaro = JSON.parse(localStorage.getItem('sc_caro_policies') || '[]');
     const localGmm = JSON.parse(localStorage.getItem('sc_gmm_policies') || '[]');
     const localAutos = JSON.parse(localStorage.getItem('sc_autos_policies') || '[]');
+    const localVida = JSON.parse(localStorage.getItem('sc_vida_policies') || '[]');
+    const localDanos = JSON.parse(localStorage.getItem('sc_danos_policies') || '[]');
+    const localHogar = JSON.parse(localStorage.getItem('sc_hogar_policies') || '[]');
     const localSini = JSON.parse(localStorage.getItem('sc_siniestros') || '[]');
     const localCoti = JSON.parse(localStorage.getItem('sc_cotizaciones') || '[]');
     const localTpls = JSON.parse(localStorage.getItem('sc_templates') || 'null') || DEFAULT_TEMPLATES;
@@ -4266,6 +4260,9 @@ function App() {
       caroPolicies: localCaro,
       gmmPolicies: localGmm,
       autosPolicies: localAutos,
+      vidaPolicies: localVida,
+      danosPolicies: localDanos,
+      hogarPolicies: localHogar,
       siniestros: localSini,
       cotizaciones: localCoti,
       templates: localTpls
@@ -4276,76 +4273,17 @@ function App() {
     });
   }, [toast]);
 
-  // Guardar en la nube cuando el usuario modifica los datos
-  useEffect(() => {
-    localStorage.setItem('sc_policies', JSON.stringify(policies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/policies').set(policies);
-    }
-  }, [policies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_caro_policies', JSON.stringify(caroPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/caroPolicies').set(caroPolicies);
-    }
-  }, [caroPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_gmm_policies', JSON.stringify(gmmPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/gmmPolicies').set(gmmPolicies);
-    }
-  }, [gmmPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_autos_policies', JSON.stringify(autosPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/autosPolicies').set(autosPolicies);
-    }
-  }, [autosPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_vida_policies', JSON.stringify(vidaPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/vidaPolicies').set(vidaPolicies);
-    }
-  }, [vidaPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_danos_policies', JSON.stringify(danosPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/danosPolicies').set(danosPolicies);
-    }
-  }, [danosPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_hogar_policies', JSON.stringify(hogarPolicies));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/hogarPolicies').set(hogarPolicies);
-    }
-  }, [hogarPolicies, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_siniestros', JSON.stringify(siniestros));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/siniestros').set(siniestros);
-    }
-  }, [siniestros, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_cotizaciones', JSON.stringify(cotizaciones));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/cotizaciones').set(cotizaciones);
-    }
-  }, [cotizaciones, dbConnected]);
-
-  useEffect(() => {
-    localStorage.setItem('sc_templates', JSON.stringify(templates));
-    if (window.db && dbConnected && isCloudLoaded.current) {
-      window.db.ref('app_data/templates').set(templates);
-    }
-  }, [templates, dbConnected]);
+  // Guardar en localStorage cuando el usuario modifica los datos
+  useEffect(() => { localStorage.setItem('sc_policies', JSON.stringify(policies)); }, [policies]);
+  useEffect(() => { localStorage.setItem('sc_caro_policies', JSON.stringify(caroPolicies)); }, [caroPolicies]);
+  useEffect(() => { localStorage.setItem('sc_gmm_policies', JSON.stringify(gmmPolicies)); }, [gmmPolicies]);
+  useEffect(() => { localStorage.setItem('sc_autos_policies', JSON.stringify(autosPolicies)); }, [autosPolicies]);
+  useEffect(() => { localStorage.setItem('sc_vida_policies', JSON.stringify(vidaPolicies)); }, [vidaPolicies]);
+  useEffect(() => { localStorage.setItem('sc_danos_policies', JSON.stringify(danosPolicies)); }, [danosPolicies]);
+  useEffect(() => { localStorage.setItem('sc_hogar_policies', JSON.stringify(hogarPolicies)); }, [hogarPolicies]);
+  useEffect(() => { localStorage.setItem('sc_siniestros', JSON.stringify(siniestros)); }, [siniestros]);
+  useEffect(() => { localStorage.setItem('sc_cotizaciones', JSON.stringify(cotizaciones)); }, [cotizaciones]);
+  useEffect(() => { localStorage.setItem('sc_templates', JSON.stringify(templates)); }, [templates]);
 
   const urgentCount = useMemo(() => policies.filter(p => {
     if (p.estatus === 'PAGADO' || p.estatus === 'CANCELADO' || p.estatus === 'LIQUIDADO') return false;
@@ -4371,38 +4309,55 @@ function App() {
   const savePolicy = useCallback((p) => {
     setPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/policies').set(next);
+      return next;
     });
   }, []);
 
   const deletePolicy = useCallback((id) => {
-    setPolicies(prev => prev.filter(p => p.id !== id));
+    setPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/policies').set(next);
+      return next;
+    });
     toast('Póliza eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   // Marcar como pagado → re-agendar
   const markPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: new Date().toISOString().split('T')[0],
-        periodoGracia: '' // El periodo de gracia solo aplica al primer recibo
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
-  }, []);
+    setPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: new Date().toISOString().split('T')[0],
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/policies').set(next);
+      return next;
+    });
+    toast('Pago confirmado', 'success');
+  }, [toast]);
 
   const importPolicies = useCallback((data, mode) => {
-    if (mode === 'reemplazar') setPolicies(data);
-    else setPolicies(prev => [...prev, ...data]);
+    setPolicies(prev => {
+      const next = mode === 'reemplazar' ? data : [...prev, ...data];
+      localStorage.setItem('sc_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/policies').set(next);
+      return next;
+    });
   }, []);
 
   const importSiniestros = useCallback((incomingData) => {
@@ -4415,8 +4370,6 @@ function App() {
         const existingIdx = next.findIndex(s => s.poliza === inc.poliza);
         if (existingIdx >= 0) {
           const existing = next[existingIdx];
-          // Conservar estatus obligatoriamente si no es CERRADO se queda PENDIENTE o el que tenía.
-          // Básicamente, siempre conservamos el estatus manual que el usuario ya le había asignado.
           next[existingIdx] = {
             ...inc,
             id: existing.id,
@@ -4433,6 +4386,8 @@ function App() {
         }
       });
       
+      localStorage.setItem('sc_siniestros', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/siniestros').set(next);
       toast(`Importación completada: ${added} nuevos, ${updated} actualizados.`, 'success');
       return next;
     });
@@ -4441,170 +4396,242 @@ function App() {
   const saveCaroPolicy = useCallback((p) => {
     setCaroPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/caroPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteCaroPolicy = useCallback((id) => {
-    setCaroPolicies(prev => prev.filter(p => p.id !== id));
+    setCaroPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/caroPolicies').set(next);
+      return next;
+    });
     toast('Póliza eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markCaroPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setCaroPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: new Date().toISOString().split('T')[0],
-        periodoGracia: '' // El periodo de gracia solo aplica al primer recibo
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
+    setCaroPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: new Date().toISOString().split('T')[0],
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/caroPolicies').set(next);
+      return next;
+    });
     toast('Pago confirmado', 'success');
   }, [toast]);
 
   const saveGmmPolicy = useCallback((p) => {
     setGmmPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/gmmPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteGmmPolicy = useCallback((id) => {
-    setGmmPolicies(prev => prev.filter(p => p.id !== id));
+    setGmmPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/gmmPolicies').set(next);
+      return next;
+    });
     toast('Póliza GMM eliminada', 'warning');
+    setDeleteConfirm(null);
   }, [toast]);
 
   const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setGmmPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: new Date().toISOString().split('T')[0],
-        periodoGracia: ''
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
+    setGmmPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: new Date().toISOString().split('T')[0],
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/gmmPolicies').set(next);
+      return next;
+    });
     toast('Pago confirmado', 'success');
   }, [toast]);
 
   const saveAutosPolicy = useCallback((p) => {
     setAutosPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/autosPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteAutosPolicy = useCallback((id) => {
-    setAutosPolicies(prev => prev.filter(p => p.id !== id));
+    setAutosPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/autosPolicies').set(next);
+      return next;
+    });
     toast('Póliza de Autos eliminada', 'warning');
+    setDeleteConfirm(null);
   }, [toast]);
 
   const markAutosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setAutosPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: new Date().toISOString().split('T')[0],
-        periodoGracia: ''
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
+    setAutosPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: new Date().toISOString().split('T')[0],
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/autosPolicies').set(next);
+      return next;
+    });
     toast('Pago confirmado', 'success');
   }, [toast]);
 
   const saveVidaPolicy = useCallback((p) => {
     setVidaPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/vidaPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteVidaPolicy = useCallback((id) => {
-    setVidaPolicies(prev => prev.filter(p => p.id !== id));
+    setVidaPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/vidaPolicies').set(next);
+      return next;
+    });
     toast('Póliza de Vida eliminada', 'warning');
+    setDeleteConfirm(null);
   }, [toast]);
 
   const markVidaPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setVidaPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: todayISO(),
-        periodoGracia: ''
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
+    setVidaPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: todayISO(),
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/vidaPolicies').set(next);
+      return next;
+    });
     toast('Pago confirmado', 'success');
   }, [toast]);
 
   const saveDanosPolicy = useCallback((p) => {
     setDanosPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/danosPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteDanosPolicy = useCallback((id) => {
-    setDanosPolicies(prev => prev.filter(p => p.id !== id));
+    setDanosPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/danosPolicies').set(next);
+      return next;
+    });
     toast('Póliza de Daños eliminada', 'warning');
+    setDeleteConfirm(null);
   }, [toast]);
 
   const markDanosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    setDanosPolicies(prev => prev.map(p => {
-      if (p.id !== policy.id) return p;
-      const basePolicy = { 
-        ...p, 
-        comprobante: comprobante || p.comprobante,
-        fechaPagoAnterior: p.fechaPago,
-        fechaUltimoPago: todayISO(),
-        periodoGracia: ''
-      };
-      if (policy.formaPago === 'CONTADO' || isLastPayment) {
-        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
-      }
-      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-    }));
+    setDanosPolicies(prev => {
+      const next = prev.map(p => {
+        if (p.id !== policy.id) return p;
+        const basePolicy = { 
+          ...p, 
+          comprobante: comprobante || p.comprobante,
+          fechaPagoAnterior: p.fechaPago,
+          fechaUltimoPago: todayISO(),
+          periodoGracia: ''
+        };
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+      });
+      localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/danosPolicies').set(next);
+      return next;
+    });
     toast('Pago confirmado', 'success');
   }, [toast]);
 
   const saveHogarPolicy = useCallback((p) => {
     setHogarPolicies(prev => {
       const exists = prev.find(x => x.id === p.id);
-      if (exists) return prev.map(x => x.id === p.id ? p : x);
-      return [...prev, p];
+      const next = exists ? prev.map(x => x.id === p.id ? p : x) : [...prev, p];
+      localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/hogarPolicies').set(next);
+      return next;
     });
   }, []);
 
   const deleteHogarPolicy = useCallback((id) => {
-    setHogarPolicies(prev => prev.filter(p => p.id !== id));
+    setHogarPolicies(prev => {
+      const next = prev.filter(p => p.id !== id);
+      localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      if (window.db) window.db.ref('app_data/hogarPolicies').set(next);
+      return next;
+    });
     toast('Póliza de Hogar eliminada', 'warning');
+    setDeleteConfirm(null);
   }, [toast]);
 
   const markHogarPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
@@ -4958,6 +4985,11 @@ function App() {
               <button className="btn btn-outline" onClick={() => setDeleteConfirm(null)}>Cancelar</button>
               <button className="btn btn-danger" onClick={() => {
                 if (deleteConfirm._isCaro) deleteCaroPolicy(deleteConfirm.id);
+                else if (deleteConfirm._isGmm) deleteGmmPolicy(deleteConfirm.id);
+                else if (deleteConfirm._isAutos) deleteAutosPolicy(deleteConfirm.id);
+                else if (deleteConfirm._isVida) deleteVidaPolicy(deleteConfirm.id);
+                else if (deleteConfirm._isDanos) deleteDanosPolicy(deleteConfirm.id);
+                else if (deleteConfirm._isHogar) deleteHogarPolicy(deleteConfirm.id);
                 else deletePolicy(deleteConfirm.id);
                 setDeleteConfirm(null);
               }}>
