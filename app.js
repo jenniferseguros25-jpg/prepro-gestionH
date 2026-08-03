@@ -4193,7 +4193,6 @@ function App() {
 
   const applyCloudData = useCallback((data) => {
     if (!data) return;
-    isCloudLoaded.current = true;
     setDbConnected(true);
 
     const pList = parseList(data.policies);
@@ -4284,9 +4283,25 @@ function App() {
     };
   }, [applyCloudData]);
 
-  // Función para forzar la subida de datos locales a la nube
+  // Función para forzar la actualización/descarga desde la nube por REST + WebSockets
+  const syncNowFromCloud = useCallback(() => {
+    fetch(`${FIREBASE_REST_URL}.json`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          applyCloudData(data);
+          toast('¡Sincronizado con la Nube con éxito! ☁️✅', 'success');
+        } else {
+          toast('Nube vacía o sin respuesta', 'warning');
+        }
+      })
+      .catch(err => {
+        toast('Error al descargar de la nube: ' + err.message, 'error');
+      });
+  }, [applyCloudData, toast]);
+
+  // Función para forzar la subida de datos locales a la nube por REST + WebSockets
   const uploadLocalToCloud = useCallback(() => {
-    if (!window.db) { alert('Firebase no está configurado'); return; }
     const localPols = JSON.parse(localStorage.getItem('sc_policies') || '[]');
     const localCaro = JSON.parse(localStorage.getItem('sc_caro_policies') || '[]');
     const localGmm = JSON.parse(localStorage.getItem('sc_gmm_policies') || '[]');
@@ -4298,7 +4313,7 @@ function App() {
     const localCoti = JSON.parse(localStorage.getItem('sc_cotizaciones') || '[]');
     const localTpls = JSON.parse(localStorage.getItem('sc_templates') || 'null') || DEFAULT_TEMPLATES;
 
-    window.db.ref('app_data').set({
+    const payload = {
       policies: localPols,
       caroPolicies: localCaro,
       gmmPolicies: localGmm,
@@ -4309,6 +4324,16 @@ function App() {
       siniestros: localSini,
       cotizaciones: localCoti,
       templates: localTpls
+    };
+
+    if (window.db) {
+      try { window.db.ref('app_data').set(payload); } catch(e) {}
+    }
+
+    fetch(`${FIREBASE_REST_URL}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     }).then(() => {
       toast('¡Datos subidos a la Nube con éxito! ☁️✅', 'success');
     }).catch(err => {
@@ -4837,14 +4862,24 @@ function App() {
             {dbConnected ? '🟢 Sincronizado en Nube' : '🟡 Conectando Nube...'}
           </p>
           <p style={{marginTop:4, fontSize: 11}}>{allPolicies.length} pólizas registradas</p>
-          <button 
-            onClick={uploadLocalToCloud}
-            className="btn btn-ghost btn-sm"
-            style={{marginTop: 8, fontSize: 10, padding: '3px 6px', width: '100%', textTransform: 'none', border: '1px solid var(--border)'}}
-            title="Subir las pólizas guardadas localmente en esta computadora a Firebase"
-          >
-            ☁️ Subir Datos a Nube
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+            <button 
+              onClick={syncNowFromCloud}
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: 10, padding: '4px 6px', width: '100%', textTransform: 'none' }}
+              title="Descargar las pólizas más recientes guardadas en la Nube"
+            >
+              🔄 Sincronizar Nube Ahora
+            </button>
+            <button 
+              onClick={uploadLocalToCloud}
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: 10, padding: '3px 6px', width: '100%', textTransform: 'none', border: '1px solid var(--border)' }}
+              title="Subir las pólizas guardadas localmente en esta computadora a Firebase"
+            >
+              ☁️ Subir Datos a Nube
+            </button>
+          </div>
         </div>
       </aside>
 
