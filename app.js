@@ -4182,16 +4182,9 @@ function App() {
   });
 
   const [dbConnected, setDbConnected] = useState(false);
-  const syncItemToCloud = (category, item) => {
-    if (window.db && item) {
-      const itemId = item.id || generateId();
-      window.db.ref(`app_data/${category}/${itemId}`).set({ ...item, id: itemId });
-    }
-  };
-
-  const removeItemFromCloud = (category, id) => {
-    if (window.db && id) {
-      window.db.ref(`app_data/${category}/${id}`).remove();
+  const syncCategoryToCloud = (category, list) => {
+    if (window.db) {
+      window.db.ref(`app_data/${category}`).set(list);
     }
   };
 
@@ -4280,12 +4273,6 @@ function App() {
   // Función para forzar la subida de datos locales a la nube
   const uploadLocalToCloud = useCallback(() => {
     if (!window.db) { alert('Firebase no está configurado'); return; }
-    const listToDict = (arr) => {
-      const dict = {};
-      (arr || []).forEach(item => { if (item && item.id) dict[item.id] = item; });
-      return dict;
-    };
-
     const localPols = JSON.parse(localStorage.getItem('sc_policies') || '[]');
     const localCaro = JSON.parse(localStorage.getItem('sc_caro_policies') || '[]');
     const localGmm = JSON.parse(localStorage.getItem('sc_gmm_policies') || '[]');
@@ -4298,15 +4285,15 @@ function App() {
     const localTpls = JSON.parse(localStorage.getItem('sc_templates') || 'null') || DEFAULT_TEMPLATES;
 
     window.db.ref('app_data').set({
-      policies: listToDict(localPols),
-      caroPolicies: listToDict(localCaro),
-      gmmPolicies: listToDict(localGmm),
-      autosPolicies: listToDict(localAutos),
-      vidaPolicies: listToDict(localVida),
-      danosPolicies: listToDict(localDanos),
-      hogarPolicies: listToDict(localHogar),
-      siniestros: listToDict(localSini),
-      cotizaciones: listToDict(localCoti),
+      policies: localPols,
+      caroPolicies: localCaro,
+      gmmPolicies: localGmm,
+      autosPolicies: localAutos,
+      vidaPolicies: localVida,
+      danosPolicies: localDanos,
+      hogarPolicies: localHogar,
+      siniestros: localSini,
+      cotizaciones: localCoti,
       templates: localTpls
     }).then(() => {
       toast('¡Datos subidos a la Nube con éxito! ☁️✅', 'success');
@@ -4354,25 +4341,24 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_policies', JSON.stringify(next));
+      syncCategoryToCloud('policies', next);
       return next;
     });
-    syncItemToCloud('policies', policyToSave);
   }, []);
 
   const deletePolicy = useCallback((id) => {
     setPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_policies', JSON.stringify(next));
+      syncCategoryToCloud('policies', next);
       return next;
     });
-    removeItemFromCloud('policies', id);
     toast('Póliza eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   // Marcar como pagado → re-agendar
   const markPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4383,15 +4369,15 @@ function App() {
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_policies', JSON.stringify(next));
+      syncCategoryToCloud('policies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('policies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4399,7 +4385,7 @@ function App() {
     setPolicies(prev => {
       const next = mode === 'reemplazar' ? data : [...prev, ...data];
       localStorage.setItem('sc_policies', JSON.stringify(next));
-      next.forEach(item => syncItemToCloud('policies', item));
+      syncCategoryToCloud('policies', next);
       return next;
     });
   }, []);
@@ -4414,27 +4400,24 @@ function App() {
         const existingIdx = next.findIndex(s => s.poliza === inc.poliza);
         if (existingIdx >= 0) {
           const existing = next[existingIdx];
-          const updatedItem = {
+          next[existingIdx] = {
             ...inc,
             id: existing.id,
             estatus: existing.estatus || 'PENDIENTE'
           };
-          next[existingIdx] = updatedItem;
-          syncItemToCloud('siniestros', updatedItem);
           updated++;
         } else {
-          const newItem = {
+          next.push({
             ...inc,
             id: generateId(),
             estatus: 'PENDIENTE'
-          };
-          next.push(newItem);
-          syncItemToCloud('siniestros', newItem);
+          });
           added++;
         }
       });
       
       localStorage.setItem('sc_siniestros', JSON.stringify(next));
+      syncCategoryToCloud('siniestros', next);
       toast(`Importación completada: ${added} nuevos, ${updated} actualizados.`, 'success');
       return next;
     });
@@ -4446,24 +4429,23 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      syncCategoryToCloud('caroPolicies', next);
       return next;
     });
-    syncItemToCloud('caroPolicies', policyToSave);
   }, []);
 
   const deleteCaroPolicy = useCallback((id) => {
     setCaroPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      syncCategoryToCloud('caroPolicies', next);
       return next;
     });
-    removeItemFromCloud('caroPolicies', id);
     toast('Póliza eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markCaroPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setCaroPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4474,15 +4456,15 @@ function App() {
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_caro_policies', JSON.stringify(next));
+      syncCategoryToCloud('caroPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('caroPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4492,24 +4474,23 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      syncCategoryToCloud('gmmPolicies', next);
       return next;
     });
-    syncItemToCloud('gmmPolicies', policyToSave);
   }, []);
 
   const deleteGmmPolicy = useCallback((id) => {
     setGmmPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      syncCategoryToCloud('gmmPolicies', next);
       return next;
     });
-    removeItemFromCloud('gmmPolicies', id);
     toast('Póliza GMM eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setGmmPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4520,15 +4501,15 @@ function App() {
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_gmm_policies', JSON.stringify(next));
+      syncCategoryToCloud('gmmPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('gmmPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4538,24 +4519,23 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      syncCategoryToCloud('autosPolicies', next);
       return next;
     });
-    syncItemToCloud('autosPolicies', policyToSave);
   }, []);
 
   const deleteAutosPolicy = useCallback((id) => {
     setAutosPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      syncCategoryToCloud('autosPolicies', next);
       return next;
     });
-    removeItemFromCloud('autosPolicies', id);
     toast('Póliza de Autos eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markAutosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setAutosPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4566,15 +4546,15 @@ function App() {
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_autos_policies', JSON.stringify(next));
+      syncCategoryToCloud('autosPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('autosPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4584,24 +4564,23 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      syncCategoryToCloud('vidaPolicies', next);
       return next;
     });
-    syncItemToCloud('vidaPolicies', policyToSave);
   }, []);
 
   const deleteVidaPolicy = useCallback((id) => {
     setVidaPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      syncCategoryToCloud('vidaPolicies', next);
       return next;
     });
-    removeItemFromCloud('vidaPolicies', id);
     toast('Póliza de Vida eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markVidaPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setVidaPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4612,15 +4591,15 @@ function App() {
           fechaUltimoPago: todayISO(),
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_vida_policies', JSON.stringify(next));
+      syncCategoryToCloud('vidaPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('vidaPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4630,24 +4609,23 @@ function App() {
       const exists = prev.find(x => x.id === policyToSave.id);
       const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      syncCategoryToCloud('danosPolicies', next);
       return next;
     });
-    syncItemToCloud('danosPolicies', policyToSave);
   }, []);
 
   const deleteDanosPolicy = useCallback((id) => {
     setDanosPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      syncCategoryToCloud('danosPolicies', next);
       return next;
     });
-    removeItemFromCloud('danosPolicies', id);
     toast('Póliza de Daños eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markDanosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setDanosPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4658,15 +4636,15 @@ function App() {
           fechaUltimoPago: todayISO(),
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_danos_policies', JSON.stringify(next));
+      syncCategoryToCloud('danosPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('danosPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
@@ -4674,26 +4652,25 @@ function App() {
     const policyToSave = { ...p, id: p.id || generateId() };
     setHogarPolicies(prev => {
       const exists = prev.find(x => x.id === policyToSave.id);
-      const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, p];
+      const next = exists ? prev.map(x => x.id === policyToSave.id ? policyToSave : x) : [...prev, policyToSave];
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      syncCategoryToCloud('hogarPolicies', next);
       return next;
     });
-    syncItemToCloud('hogarPolicies', policyToSave);
   }, []);
 
   const deleteHogarPolicy = useCallback((id) => {
     setHogarPolicies(prev => {
       const next = prev.filter(p => p.id !== id);
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      syncCategoryToCloud('hogarPolicies', next);
       return next;
     });
-    removeItemFromCloud('hogarPolicies', id);
     toast('Póliza de Hogar eliminada', 'warning');
     setDeleteConfirm(null);
   }, [toast]);
 
   const markHogarPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
-    let updatedPolicy = null;
     setHogarPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4704,15 +4681,15 @@ function App() {
           fechaUltimoPago: todayISO(),
           periodoGracia: ''
         };
-        updatedPolicy = (policy.formaPago === 'CONTADO' || isLastPayment)
-          ? { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago }
-          : { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
-        return updatedPolicy;
+        if (policy.formaPago === 'CONTADO' || isLastPayment) {
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+        }
+        return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
       localStorage.setItem('sc_hogar_policies', JSON.stringify(next));
+      syncCategoryToCloud('hogarPolicies', next);
       return next;
     });
-    if (updatedPolicy) syncItemToCloud('hogarPolicies', updatedPolicy);
     toast('Pago confirmado', 'success');
   }, [toast]);
 
