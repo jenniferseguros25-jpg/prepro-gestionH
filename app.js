@@ -387,11 +387,16 @@ function FieldGroup({ label, id, required, error, children }) {
 }
 
 // ─── Modal: Nueva / Editar Póliza ────────────────────────────
-function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL', 'MARTIN'] }) {
+function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = false }) {
+  const defaultOpts = isGmm 
+    ? ['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGURO'] 
+    : ['DANIEL', 'MARTIN'];
+  const optsList = agentOptions || defaultOpts;
+
   const isEdit = !!policy?.id;
   const [form, setForm] = useState(policy || {
     nombre: '', poliza: '', bien: '', formaPago: 'MENSUAL',
-    agente: agentOptions[0], fechaPago: todayISO(), monto: '',
+    agente: optsList[0], fechaPago: todayISO(), monto: '',
     estatus: 'PENDIENTE', correo: '', telefono: '', notas: '',
     periodoGracia: '', fechaInicioVigencia: ''
   });
@@ -422,11 +427,9 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL',
     onClose();
   };
 
-  // F es ahora FieldGroup definido fuera del componente
-
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal modal-wide">
+    <div className="modal-overlay">
+      <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{isEdit ? '✏️ Editar Póliza' : '➕ Nueva Póliza'}</h2>
           <button className="modal-close" onClick={onClose}><Icons.Close /></button>
@@ -443,10 +446,10 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL',
                 onChange={e => set('poliza', e.target.value)} placeholder="POL-2024-000" />
             </FieldGroup>
             <div className="form-group full-width">
-              <label className="form-label">Vehículo / Bien Asegurado</label>
+              <label className="form-label">{isGmm ? 'Plan' : 'Vehículo / Bien Asegurado'}</label>
               <input className="input" value={form.bien}
                 onChange={e => set('bien', e.target.value)}
-                placeholder="Ej: Toyota Corolla 2022 – ABC-123-X" />
+                placeholder={isGmm ? 'Ej: Salud Global Esencial, Plenitud Directo...' : 'Ej: Toyota Corolla 2022 – ABC-123-X'} />
             </div>
             <FieldGroup label="Forma de Pago" id="formaPago">
               <select id="formaPago" className="select" value={form.formaPago}
@@ -457,10 +460,10 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL',
                 <option value="SEMESTRAL">SEMESTRAL</option>
               </select>
             </FieldGroup>
-            <FieldGroup label="Clave de Agente" id="agente">
+            <FieldGroup label={isGmm ? 'Aseguradora' : 'Clave de Agente'} id="agente">
               <select id="agente" className="select" value={form.agente}
                 onChange={e => set('agente', e.target.value)}>
-                {agentOptions.map(opt => (
+                {Array.from(new Set([...optsList, ...(form.agente ? [form.agente] : [])])).map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
@@ -501,7 +504,7 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL',
               <input id="correo" type="email" className="input" value={form.correo}
                 onChange={e => set('correo', e.target.value)} placeholder="ejemplo@correo.com" />
             </FieldGroup>
-            <FieldGroup label="Teléfono / WhatsApp (con lada)" id="telefono">
+            <FieldGroup label="Teléfono / WhatsApp 1 (con lada)" id="telefono">
               <div style={{display:'flex', gap:8}}>
                 <select className="select" style={{width:90}}
                   value={form.lada || '+52'} onChange={e => set('lada', e.target.value)}>
@@ -514,8 +517,34 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions = ['DANIEL',
                   placeholder="10 dígitos" maxLength={10} />
               </div>
             </FieldGroup>
+            <FieldGroup label="Teléfono / WhatsApp 2 (Opcional)" id="telefono2">
+              <div style={{display:'flex', gap:8}}>
+                <select className="select" style={{width:90}}
+                  value={form.lada2 || '+52'} onChange={e => set('lada2', e.target.value)}>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input id="telefono2" type="tel" className="input" value={form.telefono2 || ''}
+                  onChange={e => set('telefono2', e.target.value.replace(/\D/g, ''))}
+                  placeholder="2do número (opcional)" maxLength={10} />
+              </div>
+            </FieldGroup>
             <div className="form-group full-width">
-              <label className="form-label">Notas Internas</label>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 6}}>
+                <label className="form-label" style={{margin:0}}>Notas Internas</label>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{fontSize: 11, padding: '2px 8px', color: 'var(--accent-blue)', background: 'rgba(23,113,197,0.1)', border: '1px solid rgba(23,113,197,0.2)', borderRadius: 6}}
+                  onClick={() => {
+                    const texto = 'Ya mande recordatorio';
+                    set('notas', form.notas ? (form.notas.includes(texto) ? form.notas : form.notas + '\n' + texto) : texto);
+                  }}
+                >
+                  📌 + Ya mande recordatorio
+                </button>
+              </div>
               <textarea className="input" rows={3} value={form.notas}
                 onChange={e => set('notas', e.target.value)}
                 placeholder="Observaciones, acuerdos, historial..." />
@@ -889,7 +918,7 @@ function ContactModal({ policy, type, templates, onClose }) {
   };
 
   const openEmail = () => {
-    const url = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${encodeURIComponent(policy.correo || '')}&su=${encodeURIComponent(emailAsunto)}&body=${encodeURIComponent(emailCuerpo)}`;
+    const url = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${encodeURIComponent(policy.correo || '')}&cc=${encodeURIComponent('dagarso79@hotmail.com')}&su=${encodeURIComponent(emailAsunto)}&body=${encodeURIComponent(emailCuerpo)}`;
     window.open(url, '_blank');
   };
 
@@ -908,16 +937,41 @@ function ContactModal({ policy, type, templates, onClose }) {
             </div>
             {type === 'whatsapp' ? (
               <div className="info-card" style={{padding: '8px 12px'}}>
-                <div className="info-card-label">WhatsApp</div>
-                <div style={{display: 'flex', alignItems: 'center', gap: 6, marginTop: 4}}>
-                  <span style={{fontSize: 13}}>{lada}</span>
+                <div className="info-card-label">WhatsApp (Selecciona el número a enviar)</div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                    <input 
+                      type="radio" 
+                      id="opt_tel1" 
+                      name="wa_select" 
+                      checked={editablePhone === (policy.telefono || '').replace(/\D/g, '')}
+                      onChange={() => setEditablePhone((policy.telefono || '').replace(/\D/g, ''))}
+                    />
+                    <label htmlFor="opt_tel1" style={{fontSize: 12, cursor: 'pointer', fontWeight: 500}}>
+                      Tel 1: {policy.lada || '+52'} {policy.telefono || '—'}
+                    </label>
+                  </div>
+                  {policy.telefono2 && (
+                    <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                      <input 
+                        type="radio" 
+                        id="opt_tel2" 
+                        name="wa_select" 
+                        checked={editablePhone === (policy.telefono2 || '').replace(/\D/g, '')}
+                        onChange={() => setEditablePhone((policy.telefono2 || '').replace(/\D/g, ''))}
+                      />
+                      <label htmlFor="opt_tel2" style={{fontSize: 12, cursor: 'pointer', fontWeight: 500}}>
+                        Tel 2: {policy.lada2 || '+52'} {policy.telefono2}
+                      </label>
+                    </div>
+                  )}
                   <input 
                     type="text" 
                     className="input" 
-                    style={{padding: '4px 8px', width: '100%'}}
+                    style={{padding: '4px 8px', width: '100%', marginTop: 4}}
                     value={editablePhone}
                     onChange={(e) => setEditablePhone(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="Número de WhatsApp"
+                    placeholder="Número personalizado"
                   />
                 </div>
               </div>
@@ -1543,6 +1597,428 @@ function CaroPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, 
         </div>
       )}
 
+      {selectedImg && <ImageModal src={selectedImg} onClose={() => setSelectedImg(null)} />}
+    </div>
+  );
+}
+
+// ─── Página: Gastos Médicos Mayores (GMM - Pólizas Separadas) ──
+function GmmPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, onEmail, toast }) {
+  const [modalNew, setModalNew] = useState(false);
+  const [modalEdit, setModalEdit] = useState(null);
+  const [modalPaid, setModalPaid] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [search, setSearch] = useState('');
+  const [estatusFiltro, setEstatusFiltro] = useState('TODOS');
+  const [selectedImg, setSelectedImg] = useState(null);
+
+  const stats = useMemo(() => {
+    const total = policies.length;
+    const pagados = policies.filter(p => p.estatus === 'PAGADO').length;
+    const pendientes = policies.filter(p => p.estatus === 'PENDIENTE').length;
+    const vencidos = policies.filter(p => isExpiredEffective(p)).length;
+    const urgentes = policies.filter(p => isUpcomingReminder(p)).length;
+    const renovaciones = policies.filter(p => isUpcomingRenewal(p)).length;
+    const comprobantes = policies.filter(p => p.comprobante).length;
+    return { total, pagados, pendientes, vencidos, urgentes, renovaciones, comprobantes };
+  }, [policies]);
+
+  let filtered = policies.filter(p => 
+    p.nombre.toLowerCase().includes(search.toLowerCase()) || 
+    p.poliza.toLowerCase().includes(search.toLowerCase()) ||
+    (p.bien && p.bien.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  if (estatusFiltro === 'PENDIENTE') filtered = filtered.filter(p => p.estatus === 'PENDIENTE');
+  else if (estatusFiltro === 'PAGADO') filtered = filtered.filter(p => p.estatus === 'PAGADO');
+  else if (estatusFiltro === 'VENCIDO') filtered = filtered.filter(p => isExpiredEffective(p));
+  else if (estatusFiltro === 'URGENTES') filtered = filtered.filter(p => isUpcomingReminder(p));
+  else if (estatusFiltro === 'RENOVACIONES') filtered = filtered.filter(p => isUpcomingRenewal(p));
+
+  return (
+    <div className="page-fade-enter">
+      <div className="flex" style={{justifyContent: 'space-between', marginBottom: 20}}>
+        <div className="search-wrapper">
+          <Icons.Search />
+          <input className="input input-search" placeholder="Buscar asegurado, póliza o plan GMM..." 
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <button className="btn btn-primary" onClick={() => setModalNew(true)}>
+          <Icons.Plus /> Nueva Póliza GMM
+        </button>
+      </div>
+
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Pólizas GMM', value: stats.total, icon: '🏥', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: estatusFiltro === s.filter || estatusFiltro === 'TODOS' ? 1 : 0.5,
+              border: estatusFiltro === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setEstatusFiltro(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <span className="card-title">
+            {estatusFiltro === 'TODOS' ? 'Todas las Pólizas de GMM' : `Pólizas GMM (${estatusFiltro})`} 
+            {' '}({filtered.length})
+          </span>
+          {estatusFiltro !== 'TODOS' && (
+            <button className="btn btn-ghost btn-sm" onClick={() => setEstatusFiltro('TODOS')}>↩ Mostrar Todas</button>
+          )}
+        </div>
+        <PoliciesTable 
+          policies={filtered}
+          onEdit={setModalEdit}
+          onDelete={setDeleteConfirm}
+          onMarkPaid={setModalPaid}
+          onWhatsApp={onWhatsApp}
+          onEmail={onEmail}
+        />
+      </div>
+
+      {/* Vista de Comprobantes GMM */}
+      {estatusFiltro === 'COMPROBANTES' && (() => {
+        const withComprobantes = policies.filter(p => p.comprobante);
+        if (withComprobantes.length === 0) return (
+          <div className="card" style={{marginTop: 20}}>
+            <div style={{padding: 40, textAlign: 'center', color: 'var(--text-muted)'}}>
+              🧾 Aún no hay comprobantes guardados en GMM.
+            </div>
+          </div>
+        );
+        const grouped = {};
+        withComprobantes.forEach(p => {
+          const dStr = p.fechaUltimoPago || new Date().toISOString().split('T')[0];
+          const date = new Date(dStr + 'T12:00:00');
+          const monthYear = date.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+          const capitalized = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+          if (!grouped[capitalized]) grouped[capitalized] = [];
+          grouped[capitalized].push(p);
+        });
+
+        return (
+          <div style={{marginTop: 24}}>
+            <h3 style={{fontSize: 16, marginBottom: 16}}>🧾 Comprobantes GMM por Mes</h3>
+            {Object.entries(grouped).map(([monthName, groupPolicies]) => (
+              <div key={monthName} className="card" style={{marginBottom: 20}}>
+                <div className="card-header" style={{background: 'var(--bg-secondary)', padding: '12px 20px'}}>
+                  <span className="card-title">📁 {monthName}</span>
+                  <span style={{fontSize:12, color:'var(--text-muted)'}}>{groupPolicies.length} comprobante(s)</span>
+                </div>
+                <div style={{padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px'}}>
+                  {groupPolicies.map(p => (
+                    <div key={p.id} style={{border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 12, background: 'var(--bg-card)'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                        <div style={{fontWeight: 600, fontSize: 14, marginBottom: 4}}>{p.nombre}</div>
+                        <button 
+                          title="Eliminar comprobante"
+                          onClick={() => { if (confirm('¿Eliminar este comprobante?')) onSave({ ...p, comprobante: null }); }}
+                          style={{background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 13, color: '#ef4444', flexShrink: 0}}
+                        >🗑️</button>
+                      </div>
+                      <div style={{fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8}}>
+                        <strong>Póliza:</strong> {p.poliza}
+                      </div>
+                      <div style={{fontSize: 11, color: 'var(--text-muted)', marginBottom: 4}}>
+                        <strong>Fecha límite:</strong> {formatDate(p.fechaPagoAnterior || p.fechaPago)}
+                      </div>
+                      <div style={{fontSize: 11, color: 'var(--accent-green)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6}}>
+                        <strong>Fecha pagado:</strong> 
+                        <input type="date" 
+                          value={p.fechaUltimoPago || new Date().toISOString().split('T')[0]} 
+                          onChange={e => onSave({ ...p, fechaUltimoPago: e.target.value })} 
+                          style={{fontSize: 11, padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg-input)', color: 'inherit'}}
+                        />
+                      </div>
+                      <div style={{width: '100%', height: 200, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', cursor: 'pointer'}}
+                           onClick={() => setSelectedImg(p.comprobante)}>
+                        {p.comprobante.startsWith('data:application/pdf') ? (
+                          <embed src={p.comprobante} width="100%" height="100%" type="application/pdf" style={{pointerEvents: 'none'}} />
+                        ) : (
+                          <img src={p.comprobante} alt={`Comprobante GMM`} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Modales */}
+      {modalNew && (
+        <PolicyModal 
+          isGmm={true}
+          onSave={(p) => { onSave(p); setModalNew(false); }} 
+          onClose={() => setModalNew(false)} 
+          toast={toast}
+          agentOptions={['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGURO']}
+        />
+      )}
+      {modalEdit && (
+        <PolicyModal 
+          isGmm={true}
+          policy={modalEdit} 
+          onSave={(p) => { onSave(p); setModalEdit(null); }} 
+          onClose={() => setModalEdit(null)} 
+          toast={toast}
+          agentOptions={['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGURO']}
+        />
+      )}
+      {modalPaid && (
+        <MarkPaidModal 
+          policy={modalPaid} 
+          onConfirm={(p, nextDate, comp, isLast) => { onMarkPaid(p, nextDate, comp, isLast); setModalPaid(null); }} 
+          onClose={() => setModalPaid(null)} 
+        />
+      )}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal" style={{maxWidth:420}} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🗑️ Confirmar Eliminación</h2>
+              <button className="modal-close" onClick={() => setDeleteConfirm(null)}><Icons.Close /></button>
+            </div>
+            <div className="modal-body">
+              <p>¿Eliminar la póliza de <strong>{deleteConfirm.nombre}</strong> (Póliza GMM: {deleteConfirm.poliza})?</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setDeleteConfirm(null)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={() => { onDelete(deleteConfirm.id); setDeleteConfirm(null); }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {selectedImg && <ImageModal src={selectedImg} onClose={() => setSelectedImg(null)} />}
+    </div>
+  );
+}
+
+// ─── Autos Otras Aseguradoras Page ────────────────────────────
+function AutosOtrasPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, onEmail, toast }) {
+  const [modalNew, setModalNew] = useState(false);
+  const [modalEdit, setModalEdit] = useState(null);
+  const [modalPaid, setModalPaid] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [search, setSearch] = useState('');
+  const [estatusFiltro, setEstatusFiltro] = useState('TODOS');
+  const [selectedImg, setSelectedImg] = useState(null);
+
+  const stats = useMemo(() => {
+    const total = policies.length;
+    const pagados = policies.filter(p => p.estatus === 'PAGADO').length;
+    const pendientes = policies.filter(p => p.estatus === 'PENDIENTE').length;
+    const vencidos = policies.filter(p => isExpiredEffective(p)).length;
+    const urgentes = policies.filter(p => isUpcomingReminder(p)).length;
+    const renovaciones = policies.filter(p => isUpcomingRenewal(p)).length;
+    const comprobantes = policies.filter(p => p.comprobante).length;
+    return { total, pagados, pendientes, vencidos, urgentes, renovaciones, comprobantes };
+  }, [policies]);
+
+  let filtered = policies.filter(p => 
+    p.nombre.toLowerCase().includes(search.toLowerCase()) || 
+    p.poliza.toLowerCase().includes(search.toLowerCase()) ||
+    (p.bien && p.bien.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  if (estatusFiltro === 'PENDIENTE') filtered = filtered.filter(p => p.estatus === 'PENDIENTE');
+  else if (estatusFiltro === 'PAGADO') filtered = filtered.filter(p => p.estatus === 'PAGADO');
+  else if (estatusFiltro === 'VENCIDO') filtered = filtered.filter(p => isExpiredEffective(p));
+  else if (estatusFiltro === 'URGENTES') filtered = filtered.filter(p => isUpcomingReminder(p));
+  else if (estatusFiltro === 'RENOVACIONES') filtered = filtered.filter(p => isUpcomingRenewal(p));
+
+  return (
+    <div className="page-fade-enter">
+      <div className="flex" style={{justifyContent: 'space-between', marginBottom: 20}}>
+        <div className="search-wrapper">
+          <Icons.Search />
+          <input className="input input-search" placeholder="Buscar asegurado, póliza o vehículo..." 
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <button className="btn btn-primary" onClick={() => setModalNew(true)}>
+          <Icons.Plus /> Nueva Póliza Auto
+        </button>
+      </div>
+
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Pólizas Autos', value: stats.total, icon: '🚗', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: estatusFiltro === s.filter || estatusFiltro === 'TODOS' ? 1 : 0.5,
+              border: estatusFiltro === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setEstatusFiltro(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <span className="card-title">
+            {estatusFiltro === 'TODOS' ? 'Todas las Pólizas de Autos (Otras Aseguradoras)' : `Pólizas Autos (${estatusFiltro})`} 
+            {' '}({filtered.length})
+          </span>
+          {estatusFiltro !== 'TODOS' && (
+            <button className="btn btn-ghost btn-sm" onClick={() => setEstatusFiltro('TODOS')}>↩ Mostrar Todas</button>
+          )}
+        </div>
+        <PoliciesTable 
+          policies={filtered}
+          onEdit={setModalEdit}
+          onDelete={setDeleteConfirm}
+          onMarkPaid={setModalPaid}
+          onWhatsApp={onWhatsApp}
+          onEmail={onEmail}
+        />
+      </div>
+
+      {/* Vista de Comprobantes Autos */}
+      {estatusFiltro === 'COMPROBANTES' && (() => {
+        const withComprobantes = policies.filter(p => p.comprobante);
+        if (withComprobantes.length === 0) return (
+          <div className="card" style={{marginTop: 20}}>
+            <div style={{padding: 40, textAlign: 'center', color: 'var(--text-muted)'}}>
+              🧾 Aún no hay comprobantes guardados en Autos.
+            </div>
+          </div>
+        );
+        const grouped = {};
+        withComprobantes.forEach(p => {
+          const dStr = p.fechaUltimoPago || new Date().toISOString().split('T')[0];
+          const date = new Date(dStr + 'T12:00:00');
+          const monthYear = date.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+          const capitalized = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+          if (!grouped[capitalized]) grouped[capitalized] = [];
+          grouped[capitalized].push(p);
+        });
+
+        return (
+          <div style={{marginTop: 24}}>
+            <h3 style={{fontSize: 16, marginBottom: 16}}>🧾 Comprobantes Autos por Mes</h3>
+            {Object.entries(grouped).map(([monthName, groupPolicies]) => (
+              <div key={monthName} className="card" style={{marginBottom: 20}}>
+                <div className="card-header" style={{background: 'var(--bg-secondary)', padding: '12px 20px'}}>
+                  <span className="card-title">📁 {monthName}</span>
+                  <span style={{fontSize:12, color:'var(--text-muted)'}}>{groupPolicies.length} comprobante(s)</span>
+                </div>
+                <div style={{padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px'}}>
+                  {groupPolicies.map(p => (
+                    <div key={p.id} style={{border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 12, background: 'var(--bg-card)'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                        <div style={{fontWeight: 600, fontSize: 14, marginBottom: 4}}>{p.nombre}</div>
+                        <button 
+                          title="Eliminar comprobante"
+                          onClick={() => { if (confirm('¿Eliminar este comprobante?')) onSave({ ...p, comprobante: null }); }}
+                          style={{background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', fontSize: 13, color: '#ef4444', flexShrink: 0}}
+                        >🗑️</button>
+                      </div>
+                      <div style={{fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8}}>
+                        <strong>Póliza:</strong> {p.poliza}
+                      </div>
+                      <div style={{fontSize: 11, color: 'var(--text-muted)', marginBottom: 4}}>
+                        <strong>Fecha límite:</strong> {formatDate(p.fechaPagoAnterior || p.fechaPago)}
+                      </div>
+                      <div style={{fontSize: 11, color: 'var(--accent-green)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6}}>
+                        <strong>Fecha pagado:</strong> 
+                        <input type="date" 
+                          value={p.fechaUltimoPago || new Date().toISOString().split('T')[0]} 
+                          onChange={e => onSave({ ...p, fechaUltimoPago: e.target.value })} 
+                          style={{fontSize: 11, padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg-input)', color: 'inherit'}}
+                        />
+                      </div>
+                      <div style={{width: '100%', height: 200, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', cursor: 'pointer'}}
+                           onClick={() => setSelectedImg(p.comprobante)}>
+                        {p.comprobante.startsWith('data:application/pdf') ? (
+                          <embed src={p.comprobante} width="100%" height="100%" type="application/pdf" style={{pointerEvents: 'none'}} />
+                        ) : (
+                          <img src={p.comprobante} alt={`Comprobante Auto`} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* Modales */}
+      {modalNew && (
+        <PolicyModal 
+          onSave={(p) => { onSave(p); setModalNew(false); }} 
+          onClose={() => setModalNew(false)} 
+          toast={toast}
+          agentOptions={['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGURO']}
+        />
+      )}
+      {modalEdit && (
+        <PolicyModal 
+          policy={modalEdit} 
+          onSave={(p) => { onSave(p); setModalEdit(null); }} 
+          onClose={() => setModalEdit(null)} 
+          toast={toast}
+          agentOptions={['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGURO']}
+        />
+      )}
+      {modalPaid && (
+        <MarkPaidModal 
+          policy={modalPaid} 
+          onConfirm={(p, nextDate, comp, isLast) => { onMarkPaid(p, nextDate, comp, isLast); setModalPaid(null); }} 
+          onClose={() => setModalPaid(null)} 
+        />
+      )}
+      {deleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal" style={{maxWidth:420}} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🗑️ Confirmar Eliminación</h2>
+              <button className="modal-close" onClick={() => setDeleteConfirm(null)}><Icons.Close /></button>
+            </div>
+            <div className="modal-body">
+              <p>¿Eliminar la póliza de <strong>{deleteConfirm.nombre}</strong> (Póliza Auto: {deleteConfirm.poliza})?</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setDeleteConfirm(null)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={() => { onDelete(deleteConfirm.id); setDeleteConfirm(null); }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
       {selectedImg && <ImageModal src={selectedImg} onClose={() => setSelectedImg(null)} />}
     </div>
   );
@@ -2623,6 +3099,13 @@ function App() {
     } catch { return []; }
   });
 
+  const [gmmPolicies, setGmmPolicies] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sc_gmm_policies');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
   const [dbConnected, setDbConnected] = useState(false);
   const isCloudLoaded = useRef(false);
 
@@ -2635,10 +3118,11 @@ function App() {
       setDbConnected(true);
       const data = snapshot.val();
 
-      if (data && ((data.policies && data.policies.length > 0) || (data.caroPolicies && data.caroPolicies.length > 0))) {
+      if (data && ((data.policies && data.policies.length > 0) || (data.caroPolicies && data.caroPolicies.length > 0) || (data.gmmPolicies && data.gmmPolicies.length > 0))) {
         isCloudLoaded.current = true;
         if (Array.isArray(data.policies)) setPolicies(data.policies);
         if (Array.isArray(data.caroPolicies)) setCaroPolicies(data.caroPolicies);
+        if (Array.isArray(data.gmmPolicies)) setGmmPolicies(data.gmmPolicies);
         if (Array.isArray(data.siniestros)) setSiniestros(data.siniestros);
         if (Array.isArray(data.cotizaciones)) setCotizaciones(data.cotizaciones);
         if (data.templates) setTemplates(data.templates);
@@ -2646,21 +3130,24 @@ function App() {
         // Nube vacía: si este navegador tiene datos locales guardados, subirlos a la nube
         const localPols = JSON.parse(localStorage.getItem('sc_policies') || '[]');
         const localCaro = JSON.parse(localStorage.getItem('sc_caro_policies') || '[]');
+        const localGmm = JSON.parse(localStorage.getItem('sc_gmm_policies') || '[]');
         const localSini = JSON.parse(localStorage.getItem('sc_siniestros') || '[]');
         const localCoti = JSON.parse(localStorage.getItem('sc_cotizaciones') || '[]');
         const localTpls = JSON.parse(localStorage.getItem('sc_templates') || 'null') || DEFAULT_TEMPLATES;
 
-        if (localPols.length > 0 || localCaro.length > 0) {
+        if (localPols.length > 0 || localCaro.length > 0 || localGmm.length > 0) {
           isCloudLoaded.current = true;
           dbRef.set({
             policies: localPols,
             caroPolicies: localCaro,
+            gmmPolicies: localGmm,
             siniestros: localSini,
             cotizaciones: localCoti,
             templates: localTpls
           });
           setPolicies(localPols);
           setCaroPolicies(localCaro);
+          setGmmPolicies(localGmm);
           setSiniestros(localSini);
           setCotizaciones(localCoti);
           setTemplates(localTpls);
@@ -2710,6 +3197,13 @@ function App() {
   }, [caroPolicies, dbConnected]);
 
   useEffect(() => {
+    localStorage.setItem('sc_gmm_policies', JSON.stringify(gmmPolicies));
+    if (window.db && dbConnected && isCloudLoaded.current) {
+      window.db.ref('app_data/gmmPolicies').set(gmmPolicies);
+    }
+  }, [gmmPolicies, dbConnected]);
+
+  useEffect(() => {
     localStorage.setItem('sc_siniestros', JSON.stringify(siniestros));
     if (window.db && dbConnected && isCloudLoaded.current) {
       window.db.ref('app_data/siniestros').set(siniestros);
@@ -2739,6 +3233,11 @@ function App() {
     if (p.estatus === 'PAGADO' || p.estatus === 'CANCELADO' || p.estatus === 'LIQUIDADO') return false;
     return isUpcomingReminder(p) || isExpiredEffective(p);
   }).length, [caroPolicies]);
+
+  const gmmUrgentCount = useMemo(() => gmmPolicies.filter(p => {
+    if (p.estatus === 'PAGADO' || p.estatus === 'CANCELADO' || p.estatus === 'LIQUIDADO') return false;
+    return isUpcomingReminder(p) || isExpiredEffective(p);
+  }).length, [gmmPolicies]);
 
   // CRUD
   const savePolicy = useCallback((p) => {
@@ -2842,6 +3341,37 @@ function App() {
     toast('Pago confirmado', 'success');
   }, [toast]);
 
+  const saveGmmPolicy = useCallback((p) => {
+    setGmmPolicies(prev => {
+      const exists = prev.find(x => x.id === p.id);
+      if (exists) return prev.map(x => x.id === p.id ? p : x);
+      return [...prev, p];
+    });
+  }, []);
+
+  const deleteGmmPolicy = useCallback((id) => {
+    setGmmPolicies(prev => prev.filter(p => p.id !== id));
+    toast('Póliza GMM eliminada', 'warning');
+  }, [toast]);
+
+  const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+    setGmmPolicies(prev => prev.map(p => {
+      if (p.id !== policy.id) return p;
+      const basePolicy = { 
+        ...p, 
+        comprobante: comprobante || p.comprobante,
+        fechaPagoAnterior: p.fechaPago,
+        fechaUltimoPago: new Date().toISOString().split('T')[0],
+        periodoGracia: ''
+      };
+      if (policy.formaPago === 'CONTADO' || isLastPayment) {
+        return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+      }
+      return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
+    }));
+    toast('Pago confirmado', 'success');
+  }, [toast]);
+
   const updateSiniestroEstatus = useCallback((id, estatus) => {
     setSiniestros(prev => prev.map(s => s.id === id ? { ...s, estatus } : s));
   }, []);
@@ -2860,8 +3390,7 @@ function App() {
     { id: 'policies', label: 'Todas las Pólizas', Icon: Icons.Policies },
     { id: 'urgent', label: 'Urgentes', Icon: Icons.Alert, badge: urgentCount > 0 ? urgentCount : null },
     { id: 'caro_policies', label: 'CLAVE CARO', Icon: Icons.Policies, badge: caroUrgentCount > 0 ? caroUrgentCount : null },
-    { id: 'siniestros', label: 'Siniestros y Reservas', Icon: Icons.Shield },
-    { id: 'cotizaciones', label: 'Cotizaciones', Icon: Icons.Templates },
+    { id: 'gmm_policies', label: 'GMM', Icon: Icons.Shield, badge: gmmUrgentCount > 0 ? gmmUrgentCount : null },
     { id: 'templates', label: 'Plantillas', Icon: Icons.Templates },
     { id: 'comprobantes', label: 'Comprobantes', Icon: Icons.Receipt },
     { id: 'import', label: 'Importar / Exportar', Icon: Icons.Import },
@@ -2872,8 +3401,7 @@ function App() {
     policies: 'Gestión de Pólizas',
     urgent: 'Recordatorios Urgentes',
     caro_policies: 'Pólizas Clave Caro',
-    siniestros: 'Módulo de Siniestros y Reservas',
-    cotizaciones: 'Módulo de Cotizaciones',
+    gmm_policies: 'Pólizas Gastos Médicos Mayores (GMM)',
     templates: 'Plantillas de Mensajes',
     comprobantes: 'Comprobantes Guardados',
     import: 'Importar / Exportar',
@@ -2980,6 +3508,17 @@ function App() {
               toast={toast}
             />
           )}
+          {page === 'gmm_policies' && (
+            <GmmPoliciesPage 
+              policies={gmmPolicies} 
+              onSave={saveGmmPolicy} 
+              onDelete={deleteGmmPolicy} 
+              onMarkPaid={markGmmPaid} 
+              onWhatsApp={p => setModalContact({ policy: p, type: 'whatsapp' })}
+              onEmail={p => setModalContact({ policy: p, type: 'email' })}
+              toast={toast}
+            />
+          )}
           {page === 'siniestros' && (
             <SiniestrosPage siniestros={siniestros} onImport={importSiniestros} onUpdateEstatus={updateSiniestroEstatus} />
           )}
@@ -3018,8 +3557,8 @@ function App() {
       )}
       {showCalendarPicker && (
         <CustomCalendarPickerModal
-          policies={page === 'caro_policies' ? [] : policies}
-          caroPolicies={page === 'caro_policies' ? caroPolicies : []}
+          policies={page === 'caro_policies' ? [] : page === 'gmm_policies' ? [] : policies}
+          caroPolicies={page === 'caro_policies' ? caroPolicies : page === 'gmm_policies' ? gmmPolicies : []}
           onClose={() => setShowCalendarPicker(false)}
           onSelectDate={(dateStr) => setDailyModalDate(dateStr)}
         />
@@ -3027,8 +3566,8 @@ function App() {
       {dailyModalDate && (
         <DailyPaymentsModal 
           dateStr={dailyModalDate} 
-          policies={page === 'caro_policies' ? [] : policies} 
-          caroPolicies={page === 'caro_policies' ? caroPolicies : []} 
+          policies={page === 'caro_policies' ? [] : page === 'gmm_policies' ? [] : policies} 
+          caroPolicies={page === 'caro_policies' ? caroPolicies : page === 'gmm_policies' ? gmmPolicies : []} 
           onClose={() => setDailyModalDate(null)} 
           onEdit={(p) => setModalEdit(p)}
           onDelete={(p) => setDeleteConfirm(p)}
