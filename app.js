@@ -1532,6 +1532,33 @@ function PoliciesPage({ policies, onEdit, onDelete, onMarkPaid, onWhatsApp, onEm
 
   return (
     <div className="page-fade-enter">
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Autos Qualitas', value: stats.total, icon: '📋', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
+              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setFilterEstatus(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de Filtros */}
       <div className="card" style={{marginBottom: 20}}>
         <div className="card-header" style={{flexDirection:'column', alignItems:'flex-start', gap:14}}>
           <div className="flex justify-between w-full items-center">
@@ -1598,32 +1625,6 @@ function PoliciesPage({ policies, onEdit, onDelete, onMarkPaid, onWhatsApp, onEm
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tarjetas KPI como filtros */}
-      <div className="stats-grid" style={{marginBottom: 20}}>
-        {[
-          { label: 'Total Autos Qualitas', value: stats.total, icon: '📋', cls: 'stat-blue', filter: 'TODOS' },
-          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
-          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
-          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
-          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
-          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
-          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`} 
-            style={{
-              cursor: 'pointer', 
-              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
-              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
-              transition: 'all 0.2s ease'
-            }} 
-            onClick={() => setFilterEstatus(s.filter)}>
-            <div className="stat-card-icon">{s.icon}</div>
-            <div className="stat-card-value">{s.value}</div>
-            <div className="stat-card-label">{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {filterEstatus !== 'COMPROBANTES' && (
@@ -1857,6 +1858,33 @@ function CaroPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, 
 
   return (
     <div className="page-fade-enter">
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Pólizas', value: stats.total, icon: '🛡️', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
+              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setFilterEstatus(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de Filtros */}
       <div className="card" style={{marginBottom: 20}}>
         <div className="card-header" style={{flexDirection:'column', alignItems:'flex-start', gap:14}}>
           <div className="flex justify-between w-full items-center">
@@ -1923,32 +1951,6 @@ function CaroPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, 
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tarjetas KPI como filtros */}
-      <div className="stats-grid" style={{marginBottom: 20}}>
-        {[
-          { label: 'Total Pólizas', value: stats.total, icon: '🛡️', cls: 'stat-blue', filter: 'TODOS' },
-          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
-          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
-          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
-          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
-          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
-          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`} 
-            style={{
-              cursor: 'pointer', 
-              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
-              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
-              transition: 'all 0.2s ease'
-            }} 
-            onClick={() => setFilterEstatus(s.filter)}>
-            <div className="stat-card-icon">{s.icon}</div>
-            <div className="stat-card-value">{s.value}</div>
-            <div className="stat-card-label">{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {filterEstatus !== 'COMPROBANTES' && (
@@ -2151,6 +2153,33 @@ function GmmPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, o
 
   return (
     <div className="page-fade-enter">
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Pólizas GMM', value: stats.total, icon: '🏥', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
+              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setFilterEstatus(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de Filtros */}
       <div className="card" style={{marginBottom: 20}}>
         <div className="card-header" style={{flexDirection:'column', alignItems:'flex-start', gap:14}}>
           <div className="flex justify-between w-full items-center">
@@ -2217,32 +2246,6 @@ function GmmPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, o
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tarjetas KPI como filtros */}
-      <div className="stats-grid" style={{marginBottom: 20}}>
-        {[
-          { label: 'Total Pólizas GMM', value: stats.total, icon: '🏥', cls: 'stat-blue', filter: 'TODOS' },
-          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
-          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
-          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
-          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
-          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
-          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`} 
-            style={{
-              cursor: 'pointer', 
-              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
-              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
-              transition: 'all 0.2s ease'
-            }} 
-            onClick={() => setFilterEstatus(s.filter)}>
-            <div className="stat-card-icon">{s.icon}</div>
-            <div className="stat-card-value">{s.value}</div>
-            <div className="stat-card-label">{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {filterEstatus !== 'COMPROBANTES' && (
@@ -2473,6 +2476,33 @@ function AutosOtrasPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhat
 
   return (
     <div className="page-fade-enter">
+      {/* Tarjetas KPI como filtros */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: 'Total Pólizas Autos', value: stats.total, icon: '🚗', cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
+              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setFilterEstatus(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de Filtros */}
       <div className="card" style={{marginBottom: 20}}>
         <div className="card-header" style={{flexDirection:'column', alignItems:'flex-start', gap:14}}>
           <div className="flex justify-between w-full items-center">
@@ -2539,32 +2569,6 @@ function AutosOtrasPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhat
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tarjetas KPI como filtros */}
-      <div className="stats-grid" style={{marginBottom: 20}}>
-        {[
-          { label: 'Total Pólizas Autos', value: stats.total, icon: '🚗', cls: 'stat-blue', filter: 'TODOS' },
-          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
-          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
-          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
-          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
-          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
-          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`} 
-            style={{
-              cursor: 'pointer', 
-              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
-              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
-              transition: 'all 0.2s ease'
-            }} 
-            onClick={() => setFilterEstatus(s.filter)}>
-            <div className="stat-card-icon">{s.icon}</div>
-            <div className="stat-card-value">{s.value}</div>
-            <div className="stat-card-label">{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {filterEstatus !== 'COMPROBANTES' && (
@@ -2810,6 +2814,33 @@ function SectionPoliciesPage({
 
   return (
     <div className="page-fade-enter">
+      {/* Tarjetas KPI */}
+      <div className="stats-grid" style={{marginBottom: 20}}>
+        {[
+          { label: `Total ${title}`, value: stats.total, icon: icon, cls: 'stat-blue', filter: 'TODOS' },
+          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
+          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
+          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
+          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
+          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
+          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
+        ].map(s => (
+          <div key={s.label} className={`stat-card ${s.cls}`} 
+            style={{
+              cursor: 'pointer', 
+              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
+              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
+              transition: 'all 0.2s ease'
+            }} 
+            onClick={() => setFilterEstatus(s.filter)}>
+            <div className="stat-card-icon">{s.icon}</div>
+            <div className="stat-card-value">{s.value}</div>
+            <div className="stat-card-label">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Barra de Filtros */}
       <div className="card" style={{marginBottom: 20}}>
         <div className="card-header" style={{flexDirection:'column', alignItems:'flex-start', gap:14}}>
           <div className="flex justify-between w-full items-center">
@@ -2876,32 +2907,6 @@ function SectionPoliciesPage({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tarjetas KPI */}
-      <div className="stats-grid" style={{marginBottom: 20}}>
-        {[
-          { label: `Total ${title}`, value: stats.total, icon: icon, cls: 'stat-blue', filter: 'TODOS' },
-          { label: 'Pendientes', value: stats.pendientes, icon: '⏳', cls: 'stat-yellow', filter: 'PENDIENTE' },
-          { label: 'Próx. a Vencer (4d)', value: stats.urgentes, icon: '🔴', cls: 'stat-orange', filter: 'URGENTES' },
-          { label: 'Vencidos', value: stats.vencidos, icon: '🛑', cls: 'stat-red', filter: 'VENCIDO' },
-          { label: 'Renovaciones', value: stats.renovaciones, icon: '🔄', cls: 'stat-purple', filter: 'RENOVACIONES' },
-          { label: 'Pagados', value: stats.pagados, icon: '✅', cls: 'stat-green', filter: 'PAGADO' },
-          { label: 'Comprobantes', value: stats.comprobantes, icon: '🧾', cls: 'stat-orange', filter: 'COMPROBANTES' },
-        ].map(s => (
-          <div key={s.label} className={`stat-card ${s.cls}`} 
-            style={{
-              cursor: 'pointer', 
-              opacity: filterEstatus === s.filter || filterEstatus === 'TODOS' ? 1 : 0.5,
-              border: filterEstatus === s.filter ? '2px solid currentColor' : '1px solid transparent',
-              transition: 'all 0.2s ease'
-            }} 
-            onClick={() => setFilterEstatus(s.filter)}>
-            <div className="stat-card-icon">{s.icon}</div>
-            <div className="stat-card-value">{s.value}</div>
-            <div className="stat-card-label">{s.label}</div>
-          </div>
-        ))}
       </div>
 
       {filterEstatus !== 'COMPROBANTES' && (
