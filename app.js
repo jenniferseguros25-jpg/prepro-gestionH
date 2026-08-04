@@ -3230,17 +3230,36 @@ function TemplatesPage({ templates, onSave, toast }) {
 }
 
 // ─── Página: Importar / Exportar ──────────────────────────────
-function ImportExportPage({ policies, onImport, toast }) {
+function ImportExportPage({ 
+  policies, caroPolicies, gmmPolicies, autosPolicies, vidaPolicies, danosPolicies, hogarPolicies,
+  onImport, toast 
+}) {
   const fileRef = useRef();
   const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [fileInfo, setFileInfo] = useState(null);
+  const [targetCategory, setTargetCategory] = useState('policies');
+
+  const getTargetPolicies = () => {
+    switch (targetCategory) {
+      case 'caroPolicies': return caroPolicies;
+      case 'gmmPolicies': return gmmPolicies;
+      case 'autosPolicies': return autosPolicies;
+      case 'vidaPolicies': return vidaPolicies;
+      case 'danosPolicies': return danosPolicies;
+      case 'hogarPolicies': return hogarPolicies;
+      default: return policies;
+    }
+  };
 
   const handleExport = () => {
     if (!window.XLSX) { toast('Librería XLSX no cargada', 'error'); return; }
     const XLSX = window.XLSX;
-    const rows = policies.map(p => ({
+    const target = getTargetPolicies() || [];
+    if (target.length === 0) { toast('No hay pólizas para exportar en esta categoría', 'error'); return; }
+    
+    const rows = target.map(p => ({
       'Nombre': p.nombre,
       'Póliza': p.poliza,
       'Vehículo': p.bien,
@@ -3404,9 +3423,9 @@ function ImportExportPage({ policies, onImport, toast }) {
 
   const confirmImport = (mode) => {
     if (!preview) return;
-    onImport(preview, mode);
+    onImport(preview, mode, targetCategory);
     setPreview(null);
-    toast(`${preview.length} pólizas importadas ✅`, 'success');
+    toast(`${preview.length} pólizas importadas en ${targetCategory} ✅`, 'success');
   };
 
   return (
@@ -3417,7 +3436,21 @@ function ImportExportPage({ policies, onImport, toast }) {
             <div className="card-header"><span className="card-title">📤 Exportar a Excel</span></div>
             <div style={{padding:24}}>
               <p style={{fontSize:13, color:'var(--text-secondary)', marginBottom:20}}>Descarga tus pólizas en formato .xlsx para respaldo o edición masiva.</p>
-              <button className="btn btn-success w-full" onClick={handleExport} disabled={policies.length === 0}>Descargar Excel</button>
+              
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block', fontSize:13, fontWeight:600, color:'var(--text-secondary)', marginBottom:6}}>Categoría a Exportar:</label>
+                <select className="form-input" value={targetCategory} onChange={(e) => setTargetCategory(e.target.value)}>
+                  <option value="policies">Autos Qualitas (Daniel/Martín)</option>
+                  <option value="caroPolicies">Autos Qualitas (Caro)</option>
+                  <option value="gmmPolicies">Gastos Médicos Mayores (GMM)</option>
+                  <option value="autosPolicies">Autos (Otras Aseguradoras)</option>
+                  <option value="vidaPolicies">Vida</option>
+                  <option value="danosPolicies">Daños</option>
+                  <option value="hogarPolicies">Hogar</option>
+                </select>
+              </div>
+
+              <button className="btn btn-success w-full" onClick={handleExport}>Descargar Excel</button>
             </div>
           </div>
         </div>
@@ -3429,6 +3462,18 @@ function ImportExportPage({ policies, onImport, toast }) {
               <span style={{fontSize:11, color:'var(--text-muted)'}}>Excel .xlsx / .xls / .csv</span>
             </div>
             <div style={{padding:24}}>
+              <div style={{marginBottom:20}}>
+                <label style={{display:'block', fontSize:13, fontWeight:600, color:'var(--text-secondary)', marginBottom:6}}>Categoría de Destino:</label>
+                <select className="form-input" value={targetCategory} onChange={(e) => setTargetCategory(e.target.value)}>
+                  <option value="policies">Autos Qualitas (Daniel/Martín)</option>
+                  <option value="caroPolicies">Autos Qualitas (Caro)</option>
+                  <option value="gmmPolicies">Gastos Médicos Mayores (GMM)</option>
+                  <option value="autosPolicies">Autos (Otras Aseguradoras)</option>
+                  <option value="vidaPolicies">Vida</option>
+                  <option value="danosPolicies">Daños</option>
+                  <option value="hogarPolicies">Hogar</option>
+                </select>
+              </div>
               {/* Zona Drag & Drop */}
               <div
                 style={{
@@ -4494,11 +4539,22 @@ function App() {
     toast('Pago confirmado', 'success');
   }, [toast]);
 
-  const importPolicies = useCallback((data, mode) => {
-    setPolicies(prev => {
+  const importToCategory = useCallback((data, mode, categoryKey) => {
+    let setter, storageKey;
+    switch (categoryKey) {
+      case 'caroPolicies': setter = setCaroPolicies; storageKey = 'sc_caro_policies'; break;
+      case 'gmmPolicies': setter = setGmmPolicies; storageKey = 'sc_gmm_policies'; break;
+      case 'autosPolicies': setter = setAutosPolicies; storageKey = 'sc_autos_policies'; break;
+      case 'vidaPolicies': setter = setVidaPolicies; storageKey = 'sc_vida_policies'; break;
+      case 'danosPolicies': setter = setDanosPolicies; storageKey = 'sc_danos_policies'; break;
+      case 'hogarPolicies': setter = setHogarPolicies; storageKey = 'sc_hogar_policies'; break;
+      default: setter = setPolicies; storageKey = 'sc_policies'; categoryKey = 'policies'; break;
+    }
+
+    setter(prev => {
       const next = mode === 'reemplazar' ? data : [...prev, ...data];
-      localStorage.setItem('sc_policies', JSON.stringify(next));
-      setTimeout(() => syncCategoryToCloud('policies', next), 0);
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      setTimeout(() => syncCategoryToCloud(categoryKey, next), 0);
       return next;
     });
   }, []);
@@ -5050,7 +5106,17 @@ function App() {
             <ComprobantesPage policies={allPolicies} onUpdatePolicy={allProps.onUpdatePolicy} />
           )}
           {page === 'import' && (
-            <ImportExportPage policies={policies} onImport={importPolicies} toast={toast} />
+            <ImportExportPage 
+              policies={policies}
+              caroPolicies={caroPolicies}
+              gmmPolicies={gmmPolicies}
+              autosPolicies={autosPolicies}
+              vidaPolicies={vidaPolicies}
+              danosPolicies={danosPolicies}
+              hogarPolicies={hogarPolicies}
+              onImport={importToCategory}
+              toast={toast} 
+            />
           )}
         </main>
       </div>
