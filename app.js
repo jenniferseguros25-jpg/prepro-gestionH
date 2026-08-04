@@ -114,7 +114,19 @@ const todayISO = () => {
 
 const generateId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-
+// Hook para cerrar modales al presionar la tecla Esc
+function useEscapeKey(onClose) {
+  useEffect(() => {
+    if (!onClose) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+}
 
 // ─── Datos de muestra ─────────────────────────────────────────
 // Sin datos de ejemplo — la app inicia vacía para importar el Excel real
@@ -324,6 +336,7 @@ function RamoBadge({ policy }) {
 
 // ─── Modal de Resumen de Póliza (Doble Clic) ─────────────────
 function PolicySummaryModal({ policy: p, onClose }) {
+  useEscapeKey(onClose);
   if (!p) return null;
   const bienLabel = p._isVida ? 'Producto' : p._isGmm ? 'Plan' : p._isHogar ? 'Inmueble' : p._isDanos ? 'Bien Asegurado' : 'Unidad / Vehículo';
   const ramoLabel = p._isCaro ? 'Autos Qualitas Caro' : p._isGmm ? 'GMM' : p._isAutos ? 'Autos (Otras)' : p._isVida ? 'Vida' : p._isDanos ? 'Daños' : p._isHogar ? 'Hogar' : 'Autos Qualitas Dani';
@@ -506,6 +519,7 @@ function FieldGroup({ label, id, required, error, children }) {
 
 // ─── Modal: Nueva / Editar Póliza ────────────────────────────
 function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = false, isAutos = false, isVida = false, isDanos = false, isHogar = false }) {
+  useEscapeKey(onClose);
   const gmmAseguradoras = ['AXA', 'MAPFRE', 'GNP', 'CHUBB', 'SURA', 'PLAN SEGUROS', 'ZURICH', 'QUALITAS', 'AIG', 'BANORTE', 'OTRO'];
   const autosAseguradoras = ['ZURICH', 'AXA', 'HDI', 'GNP', 'QUALITAS', 'AIG', 'MAPFRE', 'BANORTE', 'ANA', 'SEGUROS ARGO', 'OTRO'];
   const defaultOpts = (isGmm || isAutos || isVida || isDanos || isHogar) 
@@ -722,6 +736,7 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
 
 // ─── Modal: Marcar como Pagado ────────────────────────────────
 function MarkPaidModal({ policy, onConfirm, onClose, toast }) {
+  useEscapeKey(onClose);
   const nextDate = policy.formaPago !== 'CONTADO'
     ? calcNextDate(policy.fechaPago, policy.formaPago) : null;
   const [comprobante, setComprobante] = useState(null);
@@ -832,6 +847,7 @@ function MarkPaidModal({ policy, onConfirm, onClose, toast }) {
 
 // ─── Modal: Calendario Interactivo con Indicadores ────────────
 function CustomCalendarPickerModal({ policies, caroPolicies, onClose, onSelectDate }) {
+  useEscapeKey(onClose);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
@@ -1012,6 +1028,7 @@ function CustomCalendarPickerModal({ policies, caroPolicies, onClose, onSelectDa
 
 // ─── Modal: Pagos por Día ─────────────────────────────────────
 function DailyPaymentsModal({ dateStr, policies, caroPolicies, onClose, onEdit, onDelete, onMarkPaid, onWhatsApp, onEmail }) {
+  useEscapeKey(onClose);
   const isPolicyForDate = useCallback((p) => {
     if (p.estatus === 'CANCELADO') return false;
     const isPaid = p.estatus === 'PAGADO' || p.estatus === 'LIQUIDADO';
@@ -1061,6 +1078,7 @@ function DailyPaymentsModal({ dateStr, policies, caroPolicies, onClose, onEdit, 
 
 // ─── Modal: WhatsApp / Correo ─────────────────────────────────
 function ContactModal({ policy, type, templates, onClose }) {
+  useEscapeKey(onClose);
   const lada = policy.lada || '+52';
   const initialPhone = (policy.telefono || '').replace(/\D/g, '');
   const [editablePhone, setEditablePhone] = useState(initialPhone);
@@ -1792,6 +1810,8 @@ function CaroPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedImg, setSelectedImg] = useState(null);
 
+  useEscapeKey(deleteConfirm ? () => setDeleteConfirm(null) : null);
+
   const [search, setSearch] = useState('');
   const [filterAgente, setFilterAgente] = useState('TODOS');
   const [filterEstatus, setFilterEstatus] = useState('TODOS');
@@ -2086,6 +2106,8 @@ function GmmPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhatsApp, o
   const [modalPaid, setModalPaid] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedImg, setSelectedImg] = useState(null);
+
+  useEscapeKey(deleteConfirm ? () => setDeleteConfirm(null) : null);
 
   const [search, setSearch] = useState('');
   const [filterAgente, setFilterAgente] = useState('TODOS');
@@ -2409,6 +2431,8 @@ function AutosOtrasPoliciesPage({ policies, onSave, onDelete, onMarkPaid, onWhat
   const [modalPaid, setModalPaid] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedImg, setSelectedImg] = useState(null);
+
+  useEscapeKey(deleteConfirm ? () => setDeleteConfirm(null) : null);
 
   const [search, setSearch] = useState('');
   const [filterAgente, setFilterAgente] = useState('TODOS');
@@ -2747,6 +2771,8 @@ function SectionPoliciesPage({
   const [modalPaid, setModalPaid] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [selectedImg, setSelectedImg] = useState(null);
+
+  useEscapeKey(deleteConfirm ? () => setDeleteConfirm(null) : null);
 
   const [search, setSearch] = useState('');
   const [filterAgente, setFilterAgente] = useState('TODOS');
@@ -4028,6 +4054,7 @@ function SiniestrosPage({ siniestros, onImport, onUpdateEstatus }) {
 }
 
 function SiniestroMessageModal({ siniestro, onClose }) {
+  useEscapeKey(onClose);
   const [copied, setCopied] = useState(null);
 
   const t1 = `Estimado ejecutivo, por medio de la presente solicito su apoyo con el estatus y/o generación de pase a corralón para la unidad del asegurado ${siniestro.asegurado || '[Nombre del Asegurado]'}, correspondiente a la Póliza ${siniestro.poliza || '[Número de Póliza]'}, Vehículo ${siniestro.vehiculo || '[Descripción del Vehículo / Serie]'}, con reporte de siniestro ${siniestro.cvestro || '[CVESTRO]'}. Quedo atento a sus comentarios. Saludos cordiales.`;
@@ -4141,6 +4168,8 @@ function App() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [dailyModalDate, setDailyModalDate] = useState(null);
   const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+
+  useEscapeKey(deleteConfirm ? () => setDeleteConfirm(null) : null);
 
   const { toasts, toast } = useToast();
 
