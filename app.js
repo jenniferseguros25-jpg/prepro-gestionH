@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    SEGUROCONTROL – App Principal
    React 18 + Babel Standalone (sin bundler)
    ============================================================ */
@@ -88,7 +88,7 @@ const isUpcomingReminder = (p) => {
   return d !== null && d >= 0 && d <= 4;
 };
 
-// Si está liquidada y se acerca su fecha de renovación (<= 31 días)
+// Si está liquidada y se acerca su fecha de renovación (<= 15 días)
 const getRenewalDate = (p) => {
   if (p.fechaInicioVigencia) {
     const d = new Date(p.fechaInicioVigencia + 'T00:00:00');
@@ -5232,4 +5232,5 @@ function App() {
 // ─── Mount ────────────────────────────────────────────────────
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+
 
