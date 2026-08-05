@@ -101,7 +101,7 @@ const getRenewalDate = (p) => {
 const isUpcomingRenewal = (p) => {
   if (p.estatus !== 'LIQUIDADO') return false;
   const d = daysUntil(getRenewalDate(p));
-  return d !== null && d <= 31;
+  return d !== null && d <= 15;
 };
 
 const todayISO = () => {
@@ -426,7 +426,15 @@ function DateCell({ dateStr, estatus, periodoGracia }) {
   const daysGracia = activeGracia ? daysUntil(activeGracia) : null;
 
   if (!dateStr) return <span className="text-muted">—</span>;
-  if (estatus === 'PAGADO' || estatus === 'LIQUIDADO' || estatus === 'CANCELADO') {
+  if (estatus === 'LIQUIDADO') {
+    return (
+      <div style={{display:'flex', flexDirection:'column'}}>
+        <span className="date-normal" style={{color: 'var(--text-primary)'}}>{formatDate(dateStr)}</span>
+        <span style={{fontSize:10, color:'var(--accent-blue-light)'}}>Último pago</span>
+      </div>
+    );
+  }
+  if (estatus === 'PAGADO' || estatus === 'CANCELADO') {
     return <span className="date-normal">{formatDate(dateStr)}</span>;
   }
   if (days === null) return <span>{formatDate(dateStr)}</span>;
@@ -4528,7 +4536,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4620,7 +4628,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4659,7 +4667,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4698,7 +4706,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4737,7 +4745,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4776,7 +4784,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -4821,7 +4829,7 @@ function App() {
           periodoGracia: ''
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
-          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: nextDate || p.fechaPago };
+          return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
         }
         return { ...basePolicy, estatus: 'PENDIENTE', fechaPago: nextDate || p.fechaPago };
       });
@@ -5224,3 +5232,4 @@ function App() {
 // ─── Mount ────────────────────────────────────────────────────
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+
