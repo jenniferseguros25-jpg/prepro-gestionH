@@ -1463,7 +1463,7 @@ function DashboardPage({ policies, onMarkPaid, onWhatsApp, onEmail, onEdit, onDe
               <div className="card-header" style={{background: 'rgba(139, 92, 246, 0.05)', borderBottom: '1px solid rgba(139, 92, 246, 0.2)'}}>
                 <span className="card-title" style={{color: '#8b5cf6'}}>🔄 Próximas a Renovar</span>
                 <span style={{fontSize:12, color:'var(--text-muted)'}}>
-                  {renovaciones.length} póliza(s) (ya liquidadas, vence su ciclo anual en ≤ 31 días)
+                  {renovaciones.length} póliza(s) (ya liquidadas, vence su ciclo anual en &lt;= 15 días)
                 </span>
               </div>
               <PoliciesTable
@@ -5232,5 +5232,6 @@ function App() {
 // ─── Mount ────────────────────────────────────────────────────
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+
 
 
