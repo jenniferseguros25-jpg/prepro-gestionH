@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    SEGUROCONTROL – App Principal
    React 18 + Babel Standalone (sin bundler)
    ============================================================ */
@@ -5028,7 +5028,7 @@ function App() {
           )}
           {page === 'caro_policies' && (
             <CaroPoliciesPage 
-              policies={caroPolicies} 
+              policies={caroPolicies.map(p => ({ ...p, _isCaro: true }))} 
               onSave={saveCaroPolicy} 
               onDelete={deleteCaroPolicy} 
               onMarkPaid={markCaroPaid} 
@@ -5039,7 +5039,7 @@ function App() {
           )}
           {page === 'gmm_policies' && (
             <GmmPoliciesPage 
-              policies={gmmPolicies} 
+              policies={gmmPolicies.map(p => ({ ...p, _isGmm: true }))} 
               onSave={saveGmmPolicy} 
               onDelete={deleteGmmPolicy} 
               onMarkPaid={markGmmPaid} 
@@ -5050,7 +5050,7 @@ function App() {
           )}
           {page === 'autos_policies' && (
             <AutosOtrasPoliciesPage 
-              policies={autosPolicies} 
+              policies={autosPolicies.map(p => ({ ...p, _isAutos: true }))} 
               onSave={saveAutosPolicy} 
               onDelete={deleteAutosPolicy} 
               onMarkPaid={markAutosPaid} 
@@ -5063,7 +5063,7 @@ function App() {
             <SectionPoliciesPage 
               title="Vida" 
               icon="💚" 
-              policies={vidaPolicies} 
+              policies={vidaPolicies.map(p => ({ ...p, _isVida: true }))} 
               onSave={saveVidaPolicy} 
               onDelete={deleteVidaPolicy} 
               onMarkPaid={markVidaPaid} 
@@ -5077,7 +5077,7 @@ function App() {
             <SectionPoliciesPage 
               title="Daños" 
               icon="🏢" 
-              policies={danosPolicies} 
+              policies={danosPolicies.map(p => ({ ...p, _isDanos: true }))} 
               onSave={saveDanosPolicy} 
               onDelete={deleteDanosPolicy} 
               onMarkPaid={markDanosPaid} 
@@ -5091,7 +5091,7 @@ function App() {
             <SectionPoliciesPage 
               title="Hogar" 
               icon="🏠" 
-              policies={hogarPolicies} 
+              policies={hogarPolicies.map(p => ({ ...p, _isHogar: true }))} 
               onSave={saveHogarPolicy} 
               onDelete={deleteHogarPolicy} 
               onMarkPaid={markHogarPaid} 
