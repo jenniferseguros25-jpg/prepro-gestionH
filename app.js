@@ -372,9 +372,15 @@ function PolicySummaryModal({ policy: p, onClose }) {
             </div>
           )}
           <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 6}}>
-            <span style={{color: 'var(--text-muted)'}}>Agente / Aseguradora:</span>
-            <strong style={{color: 'var(--text-primary)'}}>{p.agente || p.aseguradora || 'N/A'}</strong>
+            <span style={{color: 'var(--text-muted)'}}>Agente:</span>
+            <strong style={{color: 'var(--text-primary)'}}>{p.agente || 'N/A'}</strong>
           </div>
+          {(p._isGmm || p._isAutos || p._isVida || p._isDanos || p._isHogar) && p.aseguradora && (
+            <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 6}}>
+              <span style={{color: 'var(--text-muted)'}}>Aseguradora:</span>
+              <strong style={{color: 'var(--text-primary)'}}>{p.aseguradora}</strong>
+            </div>
+          )}
           <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 6}}>
             <span style={{color: 'var(--text-muted)'}}>Forma de Pago:</span>
             <span className="forma-badge">{p.formaPago}</span>
