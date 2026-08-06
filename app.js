@@ -290,7 +290,9 @@ function ToastContainer({ toasts }) {
 
 // ─── Status Badge ─────────────────────────────────────────────
 function StatusBadge({ policy }) {
-  const estatus = policy.estatus;
+  const rawEstatus = policy.estatus;
+  // Si la póliza está pendiente pero ya pasó su fecha (o periodo de gracia), mostrar como VENCIDO
+  const estatus = (rawEstatus === 'PENDIENTE' && isExpiredEffective(policy)) ? 'VENCIDO' : rawEstatus;
   const map = {
     PAGADO: 'pagado', PENDIENTE: 'pendiente',
     VENCIDO: 'vencido', CANCELADO: 'cancelado', LIQUIDADO: 'liquidado'
