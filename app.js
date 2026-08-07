@@ -62,6 +62,14 @@ const parseMonto = (val) => {
   return Number(s) || 0;
 };
 
+const getEffectiveMonto = (p) => {
+  if (!p) return 0;
+  if (p.formaPago !== 'CONTADO' && p.montoSubsecuente && p.fechaInicioVigencia && p.fechaPago > p.fechaInicioVigencia) {
+    return Number(p.montoSubsecuente);
+  }
+  return Number(p.monto || 0);
+};
+
 const daysUntil = (dateStr) => {
   if (!dateStr) return null;
   const today = new Date();
@@ -587,10 +595,12 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
 
   const handleSave = () => {
     if (!validate()) { toast('Por favor corrige los errores', 'error'); return; }
+    const isSubsequent = form.formaPago !== 'CONTADO' && form.montoSubsecuente && form.fechaInicioVigencia && form.fechaPago > form.fechaInicioVigencia;
+    const activeMonto = isSubsequent ? Number(form.montoSubsecuente) : Number(form.monto);
     const saved = {
       ...form,
       id: form.id || generateId(),
-      monto: Number(form.monto),
+      monto: activeMonto,
       ...(form.formaPago !== 'CONTADO' && form.montoSubsecuente ? { montoSubsecuente: Number(form.montoSubsecuente) } : {}),
       ...((isAutos || isGmm || isVida || isDanos || isHogar) && form.agente === 'OTRO' && form.agenteCustom ? { agente: form.agenteCustom } : {})
     };
@@ -1335,7 +1345,7 @@ function PoliciesTable({ policies, onEdit, onDelete, onMarkPaid, onWhatsApp, onE
               {showSectionTag && <td><RamoBadge policy={p} /></td>}
               <td><span className="forma-badge">{p.formaPago}</span></td>
               <td><DateCell dateStr={p.fechaPago} estatus={p.estatus} periodoGracia={p.periodoGracia} /></td>
-              <td><span style={{fontWeight:600}}>{formatMoney(p.monto)}</span></td>
+              <td><span style={{fontWeight:600}}>{formatMoney(getEffectiveMonto(p))}</span></td>
               <td><StatusBadge policy={p} /></td>
               <td>
                 <div className="action-btns">
