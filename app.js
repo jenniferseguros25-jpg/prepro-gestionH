@@ -577,6 +577,9 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
     if (!form.poliza.trim()) e.poliza = 'Requerido';
     if (!form.fechaPago) e.fechaPago = 'Requerido';
     if (!form.monto || isNaN(Number(form.monto))) e.monto = 'Monto inválido';
+    if (form.formaPago !== 'CONTADO') {
+      if (!form.montoSubsecuente || isNaN(Number(form.montoSubsecuente))) e.montoSubsecuente = 'Requerido';
+    }
     if (form.correo && !/\S+@\S+\.\S+/.test(form.correo)) e.correo = 'Correo inválido';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -588,6 +591,7 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
       ...form,
       id: form.id || generateId(),
       monto: Number(form.monto),
+      ...(form.formaPago !== 'CONTADO' && form.montoSubsecuente ? { montoSubsecuente: Number(form.montoSubsecuente) } : {}),
       ...((isAutos || isGmm || isVida || isDanos || isHogar) && form.agente === 'OTRO' && form.agenteCustom ? { agente: form.agenteCustom } : {})
     };
     onSave(saved);
@@ -676,10 +680,20 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
                 </span>
               )}
             </FieldGroup>
-            <FieldGroup label="Monto ($)" id="monto" required error={errors.monto}>
+            <FieldGroup label="Monto 1er Recibo ($)" id="monto" required error={errors.monto}>
               <input id="monto" type="number" className="input" value={form.monto}
                 onChange={e => set('monto', e.target.value)} placeholder="0.00" min="0" step="0.01" />
             </FieldGroup>
+            {form.formaPago !== 'CONTADO' && (
+              <FieldGroup label="Monto Subsecuente ($) (2º recibo en adelante)" id="montoSubsecuente" required error={errors.montoSubsecuente}>
+                <input id="montoSubsecuente" type="number" className={`input ${errors.montoSubsecuente ? 'input-error' : ''}`}
+                  value={form.montoSubsecuente || ''}
+                  onChange={e => set('montoSubsecuente', e.target.value)} placeholder="Ej: 1880.82" min="0" step="0.01" />
+                <span style={{fontSize:11, color:'var(--text-muted)', marginTop:2}}>
+                  📌 El sistema cobrará esta cantidad automáticamente a partir del 2º pago.
+                </span>
+              </FieldGroup>
+            )}
             <FieldGroup label="Estatus" id="estatus">
               <select id="estatus" className="select" value={form.estatus}
                 onChange={e => set('estatus', e.target.value)}>
@@ -758,6 +772,7 @@ function MarkPaidModal({ policy, onConfirm, onClose, toast }) {
   const nextDate = policy.formaPago !== 'CONTADO'
     ? calcNextDate(policy.fechaPago, policy.formaPago) : null;
   const [comprobante, setComprobante] = useState(null);
+  const [nextMonto, setNextMonto] = useState(policy.montoSubsecuente || policy.monto || '');
 
   let isLastPayment = false;
   if (policy.formaPago !== 'CONTADO' && policy.fechaInicioVigencia && nextDate) {
@@ -835,6 +850,15 @@ function MarkPaidModal({ policy, onConfirm, onClose, toast }) {
               <p style={{fontSize:12, color:'var(--text-muted)', marginTop:4}}>
                 El estatus regresará a <strong>PENDIENTE</strong> para el siguiente ciclo.
               </p>
+              <div style={{marginTop:12, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.1)'}}>
+                <label className="form-label" style={{fontSize:12, marginBottom:4, color:'var(--text-primary)'}}>
+                  Monto del Siguiente Recibo ($)
+                </label>
+                <input type="number" className="input" value={nextMonto} onChange={e => setNextMonto(e.target.value)} placeholder="0.00" step="0.01" />
+                <span style={{fontSize:11, color:'var(--text-muted)', marginTop:4, display:'block'}}>
+                  💡 Ajusta este monto si los recibos subsecuentes cambian respecto al 1er pago.
+                </span>
+              </div>
             </div>
           )}
 
@@ -851,7 +875,7 @@ function MarkPaidModal({ policy, onConfirm, onClose, toast }) {
         <div className="modal-footer">
           <button className="btn btn-outline" onClick={onClose}>Cancelar</button>
           <button className="btn btn-success" onClick={() => {
-            onConfirm(policy, nextDate, comprobante, isLastPayment);
+            onConfirm(policy, nextDate, comprobante, isLastPayment, nextMonto);
             toast('Pago registrado y fecha actualizada ✅', 'success');
             onClose();
           }}>
@@ -4534,7 +4558,7 @@ function App() {
   }, [purgePolicyFromAllCategories, toast]);
 
   // Marcar como pagado → re-agendar
-  const markPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4543,7 +4567,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4626,7 +4651,7 @@ function App() {
     toast('Póliza eliminada', 'warning');
   }, [purgePolicyFromAllCategories, toast]);
 
-  const markCaroPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markCaroPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setCaroPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4635,7 +4660,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4665,7 +4691,7 @@ function App() {
     toast('Póliza GMM eliminada', 'warning');
   }, [purgePolicyFromAllCategories, toast]);
 
-  const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markGmmPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setGmmPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4674,7 +4700,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4704,7 +4731,7 @@ function App() {
     toast('Póliza de Autos eliminada', 'warning');
   }, [purgePolicyFromAllCategories, toast]);
 
-  const markAutosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markAutosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setAutosPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4713,7 +4740,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4743,7 +4771,7 @@ function App() {
     toast('Póliza de Vida eliminada', 'warning');
   }, [purgePolicyFromAllCategories, toast]);
 
-  const markVidaPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markVidaPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setVidaPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4752,7 +4780,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4782,7 +4811,7 @@ function App() {
     toast('Póliza de Daños eliminada', 'warning');
   }, [purgePolicyFromAllCategories, toast]);
 
-  const markDanosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markDanosPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setDanosPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4791,7 +4820,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4827,7 +4857,7 @@ function App() {
     setDeleteConfirm(null);
   }, [toast]);
 
-  const markHogarPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false) => {
+  const markHogarPaid = useCallback((policy, nextDate, comprobante, isLastPayment = false, nextMonto) => {
     setHogarPolicies(prev => {
       const next = prev.map(p => {
         if (p.id !== policy.id) return p;
@@ -4836,7 +4866,8 @@ function App() {
           comprobante: comprobante || p.comprobante,
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
-          periodoGracia: ''
+          periodoGracia: '',
+          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
