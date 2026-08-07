@@ -595,12 +595,10 @@ function PolicyModal({ policy, onSave, onClose, toast, agentOptions, isGmm = fal
 
   const handleSave = () => {
     if (!validate()) { toast('Por favor corrige los errores', 'error'); return; }
-    const isSubsequent = form.formaPago !== 'CONTADO' && form.montoSubsecuente && form.fechaInicioVigencia && form.fechaPago > form.fechaInicioVigencia;
-    const activeMonto = isSubsequent ? Number(form.montoSubsecuente) : Number(form.monto);
     const saved = {
       ...form,
       id: form.id || generateId(),
-      monto: activeMonto,
+      monto: Number(form.monto),
       ...(form.formaPago !== 'CONTADO' && form.montoSubsecuente ? { montoSubsecuente: Number(form.montoSubsecuente) } : {}),
       ...((isAutos || isGmm || isVida || isDanos || isHogar) && form.agente === 'OTRO' && form.agenteCustom ? { agente: form.agenteCustom } : {})
     };
@@ -4578,7 +4576,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4671,7 +4669,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4711,7 +4709,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4751,7 +4749,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: new Date().toISOString().split('T')[0],
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4791,7 +4789,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4831,7 +4829,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
@@ -4877,7 +4875,7 @@ function App() {
           fechaPagoAnterior: p.fechaPago,
           fechaUltimoPago: todayISO(),
           periodoGracia: '',
-          monto: (nextMonto !== undefined && nextMonto !== '') ? nextMonto : (p.montoSubsecuente || p.monto)
+          ...(nextMonto !== undefined && nextMonto !== '' ? { montoSubsecuente: Number(nextMonto) } : {})
         };
         if (policy.formaPago === 'CONTADO' || isLastPayment) {
           return { ...basePolicy, estatus: 'LIQUIDADO', fechaPago: p.fechaPago };
